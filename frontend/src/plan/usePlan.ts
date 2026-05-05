@@ -2,9 +2,9 @@
 
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import type { DayPlan, PlanConfig } from './storage'
+import type { DayPlan, PlanConfig, CardioRecord } from './storage'
 import { loadPlan, savePlan, loadConfig, saveConfig } from './storage'
-import { generatePlan, getAdjustOptions, getWeekInfo, getCurrentWeekMonday, formatDate, parseDate, addDays } from './planEngine'
+import { generatePlan, getAdjustOptions, getWeekInfo, getCurrentWeekMonday, formatDate, parseDate, addDays, getNeglectedExercises } from './planEngine'
 import { exportICS, getICSBlobUrl, getICSFile } from './ics'
 
 export const usePlan = defineStore('plan', () => {
@@ -13,11 +13,18 @@ export const usePlan = defineStore('plan', () => {
   const currentWeekMonday = ref<string>(getCurrentWeekMonday())
   const showAdjustModal = ref(false)
   const adjustDate = ref<string | null>(null)
+  const showCardioModal = ref(false)
+  const cardioModalDate = ref<string | null>(null)
 
   // === 计算属性 ===
   const weekInfo = computed(() => getWeekInfo(plan.value, currentWeekMonday.value))
 
   const hasPlan = computed(() => plan.value.length > 0)
+
+  /** 过去一周内被忽视的力量训练动作 */
+  const neglectedExercises = computed(() =>
+    getNeglectedExercises(plan.value, currentWeekMonday.value)
+  )
 
   // === 初始化计划 ===
   function initPlan(startDate?: string) {
@@ -41,10 +48,50 @@ export const usePlan = defineStore('plan', () => {
 
   // === 标记完成 ===
   function markCompleted(date: string) {
+    const day = plan.value.find(p => p.date === date)
+    if (!day) return
+
+    // 有氧日：弹出记录弹窗
+    if (day.type === 'cardio' && !day.completed) {
+      cardioModalDate.value = date
+      showCardioModal.value = true
+      return
+    }
+
+    // 力量日 / 休息日 / 撤销（已完成的任何类型）：直接切换
     plan.value = plan.value.map(p =>
       p.date === date ? { ...p, completed: !p.completed, missed: false } : p
     )
     savePlan(plan.value)
+  }
+
+  /** 切换力量训练中单个动作的完成状态 */
+  function toggleExercise(date: string, exerciseIndex: number) {
+    plan.value = plan.value.map(p => {
+      if (p.date !== date) return p
+      const exs = [...p.exercises]
+      if (exerciseIndex >= 0 && exerciseIndex < exs.length) {
+        exs[exerciseIndex] = { ...exs[exerciseIndex], completed: !exs[exerciseIndex].completed }
+      }
+      return { ...p, exercises: exs }
+    })
+    savePlan(plan.value)
+  }
+
+  /** 保存有氧训练完成记录并标记完成 */
+  function saveCardioRecord(date: string, record: CardioRecord) {
+    plan.value = plan.value.map(p =>
+      p.date === date ? { ...p, cardioRecord: record, completed: true, missed: false } : p
+    )
+    savePlan(plan.value)
+    showCardioModal.value = false
+    cardioModalDate.value = null
+  }
+
+  /** 关闭有氧完成弹窗（不标记完成） */
+  function cancelCardioModal() {
+    showCardioModal.value = false
+    cardioModalDate.value = null
   }
 
   // === 跳过/错过 ===
@@ -136,13 +183,19 @@ export const usePlan = defineStore('plan', () => {
     currentWeekMonday,
     showAdjustModal,
     adjustDate,
+    showCardioModal,
+    cardioModalDate,
     // 计算
     weekInfo,
     hasPlan,
+    neglectedExercises,
     // 方法
     initPlan,
     ensurePlan,
     markCompleted,
+    toggleExercise,
+    saveCardioRecord,
+    cancelCardioModal,
     skipDay,
     applyAdjustOption,
     cancelAdjust,

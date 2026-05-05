@@ -1,6 +1,6 @@
 // plan/planEngine.ts — 计划生成与调整算法（纯函数）
 
-import type { DayPlan, PlanConfig, TrainingType } from './storage'
+import type { DayPlan, PlanConfig, TrainingType, ExerciseItem, CardioRecord } from './storage'
 
 // === 日期工具函数 ===
 
@@ -53,15 +53,30 @@ const STRENGTH_DAYS = [1, 4] // 周一、周四
 const CARDIO_DAYS = [2, 5, 0] // 周二、周五、周日（3次有氧，不连续）
 const LONG_CARDIO_DAY = 0    // 周日 = 长有氧
 
-const STRENGTH_EXERCISES = [
-  '引体向上 3×8-12',
-  '双杠臂屈伸 3×8-12',
-  '下斜俯卧撑 3×10-15',
-  '保加利亚分腿蹲 3×10-12/侧'
+/** 力量训练动作定义（name + prescription） */
+const STRENGTH_EXERCISE_DEFS: { name: string; prescription: string }[] = [
+  { name: '引体向上', prescription: '3×8-12' },
+  { name: '双杠臂屈伸', prescription: '3×8-12' },
+  { name: '下斜俯卧撑', prescription: '3×10-15' },
+  { name: '保加利亚分腿蹲', prescription: '3×10-12/侧' }
 ]
 
+/** 有氧训练动作定义 */
+export const CARDIO_ACTIONS: string[] = ['慢跑', '跳绳', '骑行', '游泳', '快走', '划船机', '椭圆机', '爬楼梯']
+
+function getStrengthExercises(): ExerciseItem[] {
+  return STRENGTH_EXERCISE_DEFS.map(e => ({ ...e, completed: false }))
+}
+
 function getStrengthDetails(): string {
-  return STRENGTH_EXERCISES.join(' | ')
+  return STRENGTH_EXERCISE_DEFS.map(e => `${e.name} ${e.prescription}`).join(' | ')
+}
+
+function getCardioExercises(isLong: boolean): ExerciseItem[] {
+  const names = isLong
+    ? ['慢跑（长有氧）']
+    : ['慢跑', '跳绳']
+  return names.map(name => ({ name, prescription: isLong ? '60-70分钟' : '35-40分钟', completed: false }))
 }
 
 function getCardioDetails(isLong: boolean): string {
@@ -89,10 +104,14 @@ export function generatePlan(config: PlanConfig): DayPlan[] {
     const type = getTrainingType(dow, trainingDays)
 
     let details = ''
+    let exercises: ExerciseItem[] = []
+    let cardioRecord: CardioRecord | null = null
     if (type === 'strength') {
       details = getStrengthDetails()
+      exercises = getStrengthExercises()
     } else if (type === 'cardio') {
       details = getCardioDetails(dow === LONG_CARDIO_DAY)
+      exercises = getCardioExercises(dow === LONG_CARDIO_DAY)
     }
 
     plan.push({
@@ -100,7 +119,9 @@ export function generatePlan(config: PlanConfig): DayPlan[] {
       type,
       completed: false,
       missed: false,
-      details
+      details,
+      exercises,
+      cardioRecord
     })
   }
 
@@ -196,19 +217,46 @@ function realignStrength(plan: DayPlan[], missedDate: string): DayPlan[] {
         type: 'strength',
         completed: false,
         missed: false,
-        details: getStrengthDetails()
+        details: getStrengthDetails(),
+        exercises: getStrengthExercises(),
+        cardioRecord: null
       }
       newPlan[strengthIndices[si]] = {
         date: orig.date,
         type: 'rest',
         completed: false,
         missed: false,
-        details: ''
+        details: '',
+        exercises: [],
+        cardioRecord: null
       }
     }
   }
 
   return newPlan
+}
+
+/** 获取过去一周内被忽视的力量训练动作名称集合
+ *  - 扫描指定日期之前 7 天内的所有力量训练日
+ *  - 返回那些分配到但未完成的动作 name 集合
+ */
+export function getNeglectedExercises(plan: DayPlan[], currentMonday: string): Set<string> {
+  const fromDate = formatDate(addDays(parseDate(currentMonday), -7))
+  const neglected = new Set<string>()
+
+  for (const day of plan) {
+    if (day.date < fromDate || day.date >= currentMonday) continue
+    if (day.type !== 'strength') continue
+    if (day.missed || day.exercises.length === 0) continue
+
+    for (const ex of day.exercises) {
+      if (!ex.completed) {
+        neglected.add(ex.name)
+      }
+    }
+  }
+
+  return neglected
 }
 
 /** 在计划中查找某个日期之后的下一个可用空档 */
