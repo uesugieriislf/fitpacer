@@ -218,6 +218,25 @@ watch(() => store.weeklyStats, () => { statsAnimated.value = false; animateStats
 const qualityLabels: Record<number, string> = {
   1: '很差', 2: '较差', 3: '一般', 4: '好', 5: '很好'
 }
+
+// BMI 弹窗
+const showBmiModal = ref(false)
+
+const bmiColor = computed(() => {
+  const b = goalStore.bmi
+  if (b === null) return 'var(--color-text)'
+  if (b < 18.5) return '#3B82F6'
+  if (b < 24) return '#00B365'
+  if (b < 28) return '#FF6B35'
+  return '#FF3B30'
+})
+
+const bmiRanges = [
+  { label: '偏瘦', range: '< 18.5', color: '#3B82F6' },
+  { label: '正常', range: '18.5 – 24', color: '#00B365' },
+  { label: '偏胖', range: '24 – 28', color: '#FF6B35' },
+  { label: '肥胖', range: '≥ 28', color: '#FF3B30' }
+]
 </script>
 
 <template>
@@ -236,9 +255,10 @@ const qualityLabels: Record<number, string> = {
 
       <div class="goal-hero card card-elevated" v-if="goalStore.currentWeight !== null">
         <div class="goal-hero-top">
-          <div class="goal-bmi-block">
-            <div class="goal-bmi-number">{{ goalStore.bmi }}</div>
-            <div class="goal-bmi-label">BMI</div>
+          <div class="goal-bmi-block" :style="{ background: bmiColor + '15' }" @click="showBmiModal = true">
+            <div class="goal-bmi-number" :style="{ color: bmiColor }">{{ goalStore.bmi }}</div>
+            <div class="goal-bmi-label">{{ goalStore.bmiCategory }}</div>
+            <div class="goal-bmi-hint">轻触了解</div>
           </div>
           <div class="goal-weight-block">
             <div class="goal-weight-current">{{ goalStore.currentWeight }}<span class="goal-unit"> kg</span></div>
@@ -345,6 +365,32 @@ const qualityLabels: Record<number, string> = {
         </div>
       </div>
     </section>
+
+    <!-- BMI 说明弹窗 -->
+    <Teleport to="body">
+      <div class="modal-overlay" v-if="showBmiModal" @click.self="showBmiModal = false">
+        <div class="modal-content">
+          <h3>关于 BMI</h3>
+
+          <p class="bmi-formula">BMI = 体重 (kg) ÷ 身高² (m)</p>
+          <p class="bmi-desc">世界卫生组织（WHO）推荐的中国成人 BMI 分类标准：</p>
+
+          <div class="bmi-range-list">
+            <div v-for="r in bmiRanges" :key="r.label" class="bmi-range-row">
+              <span class="bmi-range-dot" :style="{ background: r.color }"></span>
+              <span class="bmi-range-label">{{ r.label }}</span>
+              <span class="bmi-range-value">{{ r.range }}</span>
+            </div>
+          </div>
+
+          <p class="bmi-note">BMI 是衡量体重是否健康的参考指标，无法区分肌肉和脂肪。运动员可能因肌肉量大而 BMI 偏高，实际体脂率正常。</p>
+
+          <div class="form-actions">
+            <button class="btn btn-primary" @click="showBmiModal = false">知道了</button>
+          </div>
+        </div>
+      </div>
+    </Teleport>
 
     <!-- 录入表单 -->
     <Teleport to="body">
@@ -460,11 +506,13 @@ const qualityLabels: Record<number, string> = {
 .goal-hero-top { display: flex; gap: 20px; align-items: center; margin-bottom: 18px; }
 
 .goal-bmi-block {
-  background: var(--color-primary-bg);
-  border-radius: var(--radius); padding: 16px 18px; text-align: center; min-width: 80px;
+  border-radius: var(--radius); padding: 16px 18px; text-align: center; min-width: 88px;
+  cursor: pointer; transition: all var(--duration-fast) var(--ease-out);
 }
-.goal-bmi-number { font-size: 32px; font-weight: 800; color: var(--color-primary); line-height: 1.1; }
-.goal-bmi-label { font-size: 12px; color: var(--color-text-secondary); margin-top: 4px; font-weight: 600; }
+.goal-bmi-block:active { transform: scale(0.96); }
+.goal-bmi-number { font-size: 34px; font-weight: 800; line-height: 1.1; }
+.goal-bmi-label { font-size: 14px; font-weight: 650; margin-top: 2px; }
+.goal-bmi-hint { font-size: 10px; color: var(--color-text-tertiary); margin-top: 6px; }
 
 .goal-weight-block { flex: 1; }
 .goal-weight-current { font-size: 36px; font-weight: 800; line-height: 1.1; }
@@ -529,6 +577,37 @@ const qualityLabels: Record<number, string> = {
 .picker-summary {
   text-align: center; margin-top: 12px; font-size: 18px; font-weight: 700;
   color: var(--color-primary);
+}
+
+/* BMI 弹窗 */
+.bmi-formula {
+  font-size: 18px; font-weight: 650; color: var(--color-text);
+  background: var(--color-bg); border-radius: var(--radius-sm);
+  padding: 14px 16px; text-align: center; margin-bottom: 16px;
+  letter-spacing: 0.2px;
+}
+.bmi-desc {
+  font-size: 13px; color: var(--color-text-secondary); margin-bottom: 12px;
+}
+.bmi-range-list {
+  display: flex; flex-direction: column; gap: 4px; margin-bottom: 14px;
+}
+.bmi-range-row {
+  display: flex; align-items: center; gap: 12px;
+  padding: 10px 14px; border-radius: var(--radius-sm); background: var(--color-bg);
+}
+.bmi-range-dot {
+  width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0;
+}
+.bmi-range-label {
+  font-size: 15px; font-weight: 600; flex: 1;
+}
+.bmi-range-value {
+  font-size: 13px; color: var(--color-text-secondary); font-variant-numeric: tabular-nums;
+}
+.bmi-note {
+  font-size: 12px; color: var(--color-text-secondary); line-height: 1.6;
+  margin-bottom: 8px; opacity: 0.8;
 }
 
 .empty-state { text-align: center; padding: 32px 24px; color: var(--color-text-secondary);
