@@ -479,19 +479,19 @@ const bmiRanges = [
 }
 
 .view-header {
-  flex-shrink: 0; padding: 24px 20px 12px;
+  flex-shrink: 0; padding: 16px 16px 0;
 }
 
 .view-body {
-  flex: 1; overflow-y: auto; padding: 16px 20px 100px;
+  flex: 1; overflow-y: auto; padding: 8px 16px 88px;
 }
 
 .view-title {
-  font-size: 28px; font-weight: 700; letter-spacing: -0.5px;
+  font-size: 24px; font-weight: 700; letter-spacing: -0.4px;
 }
 
-.section { margin-bottom: 32px; }
-.section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+.section { margin-bottom: 24px; }
+.section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
 .section-title { font-size: 20px; font-weight: 650; letter-spacing: -0.3px; }
 .section-desc { font-size: 14px; color: var(--color-text-secondary); margin-bottom: 16px; line-height: 1.5; }
 

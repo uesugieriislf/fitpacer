@@ -30,20 +30,21 @@ function getAdjustOptionsForDate(plan: DayPlan[], date: string) {
 <template>
   <div class="view">
     <div class="view-header">
-      <h1 class="view-title">训练计划</h1>
-      <div class="header-actions">
-        <button class="btn btn-outline btn-sm" @click="store.handleOpenInCalendar">添加到日历</button>
-        <button class="btn btn-primary btn-sm" @click="store.handleExportICS">导出</button>
+      <div class="header-top">
+        <h1 class="view-title">训练计划</h1>
+        <div class="header-actions">
+          <button class="btn btn-outline btn-sm" @click="store.handleOpenInCalendar">添加到日历</button>
+          <button class="btn btn-primary btn-sm" @click="store.handleExportICS">导出</button>
+        </div>
+      </div>
+      <div class="week-nav">
+        <button class="btn btn-ghost week-arrow" @click="store.goToWeek(-1)">‹</button>
+        <span class="week-label">{{ weekLabel }}</span>
+        <button class="btn btn-ghost week-arrow" @click="store.goToWeek(1)">›</button>
       </div>
     </div>
 
     <div class="view-body">
-    <div class="week-nav">
-      <button class="btn btn-ghost week-arrow" @click="store.goToWeek(-1)">‹</button>
-      <span class="week-label">{{ weekLabel }}</span>
-      <button class="btn btn-ghost week-arrow" @click="store.goToWeek(1)">›</button>
-    </div>
-
     <div class="day-list card-stagger" v-if="weekInfo">
       <div v-for="day in weekInfo.days" :key="day.date"
         :class="['day-card card', `day-${day.type}`, {
@@ -99,18 +100,19 @@ function getAdjustOptionsForDate(plan: DayPlan[], date: string) {
 
 <style scoped>
 .view { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
-.view-header { flex-shrink: 0; display: flex; justify-content: space-between; align-items: center; padding: 24px 20px 12px; }
-.view-body { flex: 1; overflow-y: auto; padding: 16px 20px 100px; }
-.view-title { font-size: 28px; font-weight: 700; letter-spacing: -0.5px; }
-.header-actions { display: flex; gap: 8px; }
+.view-header { flex-shrink: 0; padding: 16px 16px 0; }
+.header-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+.view-body { flex: 1; overflow-y: auto; padding: 8px 16px 88px; }
+.view-title { font-size: 24px; font-weight: 700; letter-spacing: -0.4px; }
+.header-actions { display: flex; gap: 6px; }
 
-.week-nav { display: flex; align-items: center; justify-content: center; gap: 20px; margin-bottom: 24px; }
-.week-arrow { font-size: 24px; font-weight: 400; color: var(--color-text); padding: 6px 14px; }
-.week-label { font-size: 16px; font-weight: 650; min-width: 150px; text-align: center; color: var(--color-text); }
+.week-nav { display: flex; align-items: center; justify-content: center; gap: 16px; padding: 8px 0 12px; }
+.week-arrow { font-size: 20px; font-weight: 400; color: var(--color-text); padding: 4px 12px; }
+.week-label { font-size: 14px; font-weight: 650; min-width: 140px; text-align: center; color: var(--color-text); }
 
-.day-list { display: flex; flex-direction: column; gap: 10px; }
+.day-list { display: flex; flex-direction: column; gap: 8px; }
 
-.day-card { padding: 18px; border-left: 4px solid transparent; border-radius: var(--radius); background: var(--color-surface);
+.day-card { padding: 14px; border-left: 3px solid transparent; border-radius: var(--radius-sm); background: var(--color-surface);
   transition: all var(--duration-fast) var(--ease-out); }
 .day-card:active { transform: scale(0.985); }
 .day-strength { border-left-color: var(--color-strength); }
@@ -119,26 +121,26 @@ function getAdjustOptionsForDate(plan: DayPlan[], date: string) {
 .day-done { opacity: 0.7; border-left-color: var(--color-primary) !important; background: var(--color-primary-bg); }
 .day-skipped { opacity: 0.45; border-left-color: var(--color-danger) !important; }
 
-.day-top { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+.day-top { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
 .day-date-block { display: flex; flex-direction: column; }
-.day-date-num { font-size: 24px; font-weight: 700; line-height: 1.1; letter-spacing: -0.3px; }
-.day-date-wd { font-size: 12px; color: var(--color-text-secondary); font-weight: 500; }
-.today-tag { background: var(--color-primary); color: #fff; padding: 3px 10px; border-radius: 12px;
-  font-size: 11px; font-weight: 600; animation: bounceIn 0.4s var(--ease-bounce); }
+.day-date-num { font-size: 22px; font-weight: 700; line-height: 1.1; letter-spacing: -0.3px; }
+.day-date-wd { font-size: 11px; color: var(--color-text-secondary); font-weight: 500; }
+.today-tag { background: var(--color-primary); color: #fff; padding: 2px 8px; border-radius: 10px;
+  font-size: 10px; font-weight: 600; animation: bounceIn 0.4s var(--ease-bounce); }
 
-.day-detail { font-size: 13px; color: var(--color-text-secondary); margin-bottom: 10px; line-height: 1.5; }
+.day-detail { font-size: 12px; color: var(--color-text-secondary); margin-bottom: 8px; line-height: 1.5; }
 
-.day-foot { display: flex; gap: 8px; align-items: center; }
-.done-badge { font-size: 13px; color: var(--color-primary); font-weight: 600; }
+.day-foot { display: flex; gap: 6px; align-items: center; }
+.done-badge { font-size: 12px; color: var(--color-primary); font-weight: 600; }
 
 /* Modal */
-.modal-desc { color: var(--color-text-secondary); margin: 8px 0 18px; font-size: 14px; }
+.modal-desc { color: var(--color-text-secondary); margin: 8px 0 16px; font-size: 14px; }
 .adj-option { cursor: pointer; margin-bottom: 8px; border: 1px solid transparent; border-radius: var(--radius);
   transition: all var(--duration-fast) var(--ease-out); }
 .adj-option:active { transform: scale(0.98); border-color: var(--color-primary); background: var(--color-primary-bg); }
 .adj-option p { font-size: 13px; color: var(--color-text-secondary); margin-top: 4px; }
 
-.empty-state { text-align: center; padding: 48px 24px; animation: fadeInUp 0.4s var(--ease-out); }
-.empty-state .empty-icon { font-size: 56px; margin-bottom: 16px; display: block; animation: float 3s ease-in-out infinite; }
-.empty-state p { margin-bottom: 16px; font-size: 15px; color: var(--color-text-secondary); }
+.empty-state { text-align: center; padding: 40px 20px; animation: fadeInUp 0.4s var(--ease-out); }
+.empty-state .empty-icon { font-size: 48px; margin-bottom: 12px; display: block; animation: float 3s ease-in-out infinite; }
+.empty-state p { margin-bottom: 12px; font-size: 14px; color: var(--color-text-secondary); }
 </style>

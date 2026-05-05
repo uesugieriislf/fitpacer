@@ -113,11 +113,11 @@ function onToggleDay(day: number) { settingsStore.toggleTrainingDay(day) }
 
 <style scoped>
 .view { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
-.view-header { flex-shrink: 0; padding: 24px 20px 12px; }
-.view-body { flex: 1; overflow-y: auto; padding: 16px 20px 100px; }
-.view-title { font-size: 28px; font-weight: 700; letter-spacing: -0.5px; }
-.section { margin-bottom: 32px; }
-.section-title-row { display: flex; align-items: center; gap: 10px; margin-bottom: 4px; }
+.view-header { flex-shrink: 0; padding: 16px 16px 0; }
+.view-body { flex: 1; overflow-y: auto; padding: 8px 16px 88px; }
+.view-title { font-size: 24px; font-weight: 700; letter-spacing: -0.4px; }
+.section { margin-bottom: 24px; }
+.section-title-row { display: flex; align-items: center; gap: 8px; margin-bottom: 2px; }
 .section-title { font-size: 20px; font-weight: 650; letter-spacing: -0.3px; }
 .section-desc { font-size: 14px; color: var(--color-text-secondary); margin-bottom: 16px; line-height: 1.5; }
 
