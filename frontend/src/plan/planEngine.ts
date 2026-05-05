@@ -64,7 +64,20 @@ const STRENGTH_EXERCISE_DEFS: { name: string; prescription: string }[] = [
 /** 有氧训练动作定义 */
 export const CARDIO_ACTIONS: string[] = ['慢跑', '跳绳', '骑行', '游泳', '快走', '划船机', '椭圆机', '爬楼梯']
 
-function getStrengthExercises(): ExerciseItem[] {
+/** 补全某一天缺失的 exercises（兼容旧数据） */
+export function ensureDayExercises(day: DayPlan): DayPlan {
+  if (day.exercises && day.exercises.length > 0) return day
+  if (day.type === 'strength') {
+    return { ...day, exercises: getStrengthExercises() }
+  }
+  if (day.type === 'cardio') {
+    const isLong = day.details?.includes('长有氧') ?? false
+    return { ...day, exercises: getCardioExercises(isLong) }
+  }
+  return day
+}
+
+export function getStrengthExercises(): ExerciseItem[] {
   return STRENGTH_EXERCISE_DEFS.map(e => ({ ...e, completed: false }))
 }
 
@@ -72,7 +85,7 @@ function getStrengthDetails(): string {
   return STRENGTH_EXERCISE_DEFS.map(e => `${e.name} ${e.prescription}`).join(' | ')
 }
 
-function getCardioExercises(isLong: boolean): ExerciseItem[] {
+export function getCardioExercises(isLong: boolean): ExerciseItem[] {
   const names = isLong
     ? ['慢跑（长有氧）']
     : ['慢跑', '跳绳']

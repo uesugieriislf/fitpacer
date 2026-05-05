@@ -2,7 +2,7 @@
 import { onMounted, computed, ref, reactive, watch } from 'vue'
 import { usePlan } from './usePlan'
 import { getTypeIcon, getTypeLabel, weekdayLabels } from '../shared/icons'
-import { getAdjustOptions, CARDIO_ACTIONS } from './planEngine'
+import { getAdjustOptions, CARDIO_ACTIONS, ensureDayExercises } from './planEngine'
 import type { DayPlan, CardioRecord, ExerciseItem } from './storage'
 
 const store = usePlan()
@@ -59,8 +59,13 @@ function submitCardio() {
 const strengthEdit = ref<ExerciseItem[]>([])
 
 function openStrengthModal(date: string) {
-  const day = store.plan.find(p => p.date === date)
-  strengthEdit.value = (day?.exercises ?? []).map(e => ({ ...e }))
+  let day = store.plan.find(p => p.date === date)
+  if (!day) return
+  // 兜底：旧数据可能没有 exercises
+  if (!day.exercises || day.exercises.length === 0) {
+    day = ensureDayExercises(day)
+  }
+  strengthEdit.value = day.exercises.map(e => ({ ...e }))
   store.markCompleted(date)
 }
 
@@ -254,7 +259,7 @@ function completionPct(day: DayPlan): number {
                 :class="['chip chip-sm', { 'chip-active': cardioForm.durationMinutes === d }]"
                 @click="cardioForm.durationMinutes = d">{{ d }}分钟</button>
               <button class="chip chip-sm"
-                @click="cardioForm.durationMinutes = day?.details?.includes('长有氧') ? 65 : 38">计划量</button>
+                @click="(() => { const d = store.plan.find(p => p.date === store.cardioModalDate); cardioForm.durationMinutes = d?.details?.includes('长有氧') ? 65 : 38 })()">计划量</button>
             </div>
           </div>
 

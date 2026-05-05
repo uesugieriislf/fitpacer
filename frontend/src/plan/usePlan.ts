@@ -4,7 +4,7 @@ import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import type { DayPlan, PlanConfig, CardioRecord } from './storage'
 import { loadPlan, savePlan, loadConfig, saveConfig } from './storage'
-import { generatePlan, getAdjustOptions, getWeekInfo, getCurrentWeekMonday, formatDate, parseDate, addDays, getNeglectedExercises } from './planEngine'
+import { generatePlan, getAdjustOptions, getWeekInfo, getCurrentWeekMonday, formatDate, parseDate, addDays, getNeglectedExercises, ensureDayExercises } from './planEngine'
 import { exportICS, getICSBlobUrl, getICSFile } from './ics'
 
 export const usePlan = defineStore('plan', () => {
@@ -41,10 +41,23 @@ export const usePlan = defineStore('plan', () => {
     saveConfig(planConfig)
   }
 
-  /** 确保计划存在：若不存在则自动生成 */
+  /** 确保计划存在：若不存在则自动生成；存在则迁移旧数据（补全 exercises） */
   function ensurePlan() {
     if (plan.value.length === 0) {
       initPlan()
+      return
+    }
+    // 迁移：补全旧数据缺失的 exercises
+    let migrated = false
+    const updated = plan.value.map(d => {
+      if (d.exercises && d.exercises.length > 0) return d
+      if (d.type === 'rest') return d
+      migrated = true
+      return ensureDayExercises(d)
+    })
+    if (migrated) {
+      plan.value = updated
+      savePlan(updated)
     }
   }
 
