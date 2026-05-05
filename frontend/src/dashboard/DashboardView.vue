@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, nextTick, watch } from 'vue'
+import { ref, computed, onMounted, nextTick, watch } from 'vue'
 import { Chart, registerables } from 'chart.js'
 import { useDashboard } from './useDashboard'
 import { useGoal } from '../goal/useGoal'
@@ -483,7 +483,7 @@ const bmiRanges = [
 }
 
 .view-body {
-  flex: 1; overflow-y: auto; padding: 8px 16px 88px;
+  flex: 1; overflow-y: auto; padding: 8px 16px 28px;
 }
 
 .view-title {

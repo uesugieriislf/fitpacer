@@ -461,21 +461,21 @@ body {
 .view {
   flex: 1;
   overflow-y: auto;
-  padding: 24px 20px;
-  padding-bottom: 100px;
+  padding: 16px 16px;
+  padding-bottom: 32px;
   animation: fadeInUp 0.3s var(--ease-out);
 }
 
 .view-title {
   font-size: 28px;
   font-weight: 700;
-  margin-bottom: 24px;
+  margin-bottom: 16px;
   letter-spacing: -0.5px;
   color: var(--color-text);
 }
 
 .section {
-  margin-bottom: 32px;
+  margin-bottom: 24px;
 }
 
 .section-header {
