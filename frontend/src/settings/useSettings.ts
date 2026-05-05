@@ -27,6 +27,10 @@ export const useSettings = defineStore('settings', () => {
     settings.value.sleepReminderTime = time
   }
 
+  function setCardioTarget(minutes: number) {
+    settings.value.cardioTargetMinutes = Math.max(10, Math.min(600, minutes))
+  }
+
   /** 应用设置：重新生成计划 */
   function applySettings() {
     const planStore = usePlan()
@@ -37,6 +41,7 @@ export const useSettings = defineStore('settings', () => {
     settings,
     toggleTrainingDay,
     setSleepReminderTime,
+    setCardioTarget,
     applySettings
   }
 })

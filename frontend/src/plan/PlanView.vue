@@ -1,11 +1,13 @@
 <script setup lang="ts">
 import { onMounted, computed, ref, reactive, watch } from 'vue'
 import { usePlan } from './usePlan'
+import { useSettings } from '../settings/useSettings'
 import { getTypeIcon, getTypeLabel, weekdayLabels } from '../shared/icons'
 import { getAdjustOptions, CARDIO_ACTIONS, ensureDayExercises } from './planEngine'
 import type { DayPlan, CardioRecord, ExerciseItem } from './storage'
 
 const store = usePlan()
+const settingsStore = useSettings()
 
 onMounted(() => {
   store.ensurePlan()
@@ -106,6 +108,22 @@ function completionPct(day: DayPlan): number {
   if (!day.exercises || day.exercises.length === 0) return 0
   return Math.round((day.exercises.filter(e => e.completed).length / day.exercises.length) * 100)
 }
+
+/** 有氧进度 */
+const cardioTarget = computed(() => settingsStore.settings.cardioTargetMinutes)
+const cardioPct = computed(() => Math.min(100, Math.round((store.weekCardioMinutes / cardioTarget.value) * 100)))
+const cardioLabel = computed(() => {
+  const done = store.weekCardioMinutes
+  const target = cardioTarget.value
+  if (done >= target) {
+    return `🎉 本周有氧已超 ${done} 分钟`
+  }
+  return `🏃 本周有氧 ${done} / ${target} 分钟`
+})
+const cardioDiff = computed(() => {
+  const diff = cardioTarget.value - store.weekCardioMinutes
+  return diff > 0 ? `还差 ${diff} 分钟` : `已超过 ${-diff} 分钟`
+})
 </script>
 
 <template>
@@ -126,6 +144,17 @@ function completionPct(day: DayPlan): number {
     </div>
 
     <div class="view-body">
+    <!-- 有氧进度条 -->
+    <div class="cardio-progress" v-if="store.hasPlan">
+      <div class="cardio-progress-text">
+        <span>{{ cardioLabel }}</span>
+        <span class="cardio-diff">{{ cardioDiff }}</span>
+      </div>
+      <div class="cardio-progress-bar">
+        <div class="cardio-progress-fill" :style="{ width: cardioPct + '%' }"></div>
+      </div>
+    </div>
+
     <div class="day-list card-stagger" v-if="weekInfo">
       <div v-for="day in weekInfo.days" :key="day.date"
         :class="['day-card card', `day-${day.type}`, {
@@ -324,6 +353,19 @@ function completionPct(day: DayPlan): number {
 .week-nav { display: flex; align-items: center; justify-content: center; gap: 16px; padding: 8px 0 12px; }
 .week-arrow { font-size: 20px; font-weight: 400; color: var(--color-text); padding: 4px 12px; }
 .week-label { font-size: 14px; font-weight: 650; min-width: 140px; text-align: center; color: var(--color-text); }
+
+/* 有氧进度条 */
+.cardio-progress {
+  margin: 4px 0 8px; padding: 12px 14px;
+  background: var(--color-surface); border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-xs);
+}
+.cardio-progress-text { display: flex; justify-content: space-between; align-items: baseline;
+  font-size: 13px; font-weight: 550; margin-bottom: 8px; }
+.cardio-diff { font-size: 11px; color: var(--color-text-secondary); font-weight: 500; }
+.cardio-progress-bar { height: 6px; background: var(--color-border-light); border-radius: 3px; overflow: hidden; }
+.cardio-progress-fill { height: 100%; background: var(--color-cardio); border-radius: 3px;
+  transition: width 0.5s var(--ease-out); }
 
 .day-list { display: flex; flex-direction: column; gap: 8px; padding-bottom: 100px; }
 

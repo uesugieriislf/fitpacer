@@ -80,6 +80,21 @@ function onToggleDay(day: number) { settingsStore.toggleTrainingDay(day) }
     </section>
 
     <section class="section">
+      <h2 class="section-title">有氧目标</h2>
+      <p class="section-desc">每周有氧运动的推荐时长（WHO 建议 150 分钟）</p>
+      <div class="form-row">
+        <div class="form-field">
+          <div class="input-with-unit">
+            <input type="number" :value="settingsStore.settings.cardioTargetMinutes"
+              @input="settingsStore.setCardioTarget(parseInt(($event.target as HTMLInputElement).value) || 150)"
+              class="text-input" step="10" min="10" max="600" />
+            <span class="unit">分钟/周</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
       <h2 class="section-title">睡眠提醒</h2>
       <p class="section-desc">设定提醒时间（页面提示）</p>
       <div class="time-row">

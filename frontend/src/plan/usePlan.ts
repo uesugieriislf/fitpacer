@@ -28,6 +28,15 @@ export const usePlan = defineStore('plan', () => {
     getNeglectedExercises(plan.value, currentWeekMonday.value)
   )
 
+  /** 本周已完成的有氧总时长（分钟） */
+  const weekCardioMinutes = computed(() => {
+    const wi = getWeekInfo(plan.value, currentWeekMonday.value)
+    if (!wi) return 0
+    return wi.days
+      .filter(d => d.type === 'cardio' && d.completed && d.cardioRecord)
+      .reduce((sum, d) => sum + (d.cardioRecord!.durationMinutes), 0)
+  })
+
   // === 初始化计划 ===
   function initPlan(startDate?: string) {
     const config = loadConfig()
@@ -229,6 +238,7 @@ export const usePlan = defineStore('plan', () => {
     weekInfo,
     hasPlan,
     neglectedExercises,
+    weekCardioMinutes,
     // 方法
     initPlan,
     ensurePlan,
