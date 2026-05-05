@@ -99,11 +99,7 @@ function getAdjustOptionsForDate(plan: DayPlan[], date: string) {
 </template>
 
 <style scoped>
-.view { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
-.view-header { flex-shrink: 0; padding: 16px 16px 0; }
 .header-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
-.view-body { flex: 1; overflow-y: auto; padding: 8px 16px 0; }
-.view-title { font-size: 24px; font-weight: 700; letter-spacing: -0.4px; }
 .header-actions { display: flex; gap: 6px; }
 
 .week-nav { display: flex; align-items: center; justify-content: center; gap: 16px; padding: 8px 0 12px; }
