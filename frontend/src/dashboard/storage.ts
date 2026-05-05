@@ -3,6 +3,7 @@
 export interface BodyData {
   id: string
   date: string        // 'YYYY-MM-DD'
+  createdAt: string   // 'YYYY-MM-DDTHH:mm:ss' — 完整时间戳，用于区分同一天多条记录
   weight: number      // kg
   waist: number       // cm
   sleepHours: number  // 睡眠时长（小时）
@@ -18,7 +19,11 @@ export function loadBodyData(): BodyData[] {
     if (!raw) return []
     const data = JSON.parse(raw)
     if (!Array.isArray(data)) return []
-    return data as BodyData[]
+    // 迁移旧数据：补全 createdAt（用 date + 00:00:00）
+    return data.map((d: any) => ({
+      ...d,
+      createdAt: d.createdAt ?? (d.date + 'T00:00:00')
+    })) as BodyData[]
   } catch {
     return []
   }

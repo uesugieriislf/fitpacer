@@ -97,15 +97,16 @@ describe('generatePlan', () => {
 // === 调整方案 ===
 
 describe('getAdjustOptions', () => {
-  it('错过力量日时提供两个选项', () => {
+  it('错过力量日时提供三个选项', () => {
     const plan = generatePlan(baseConfig)
     const opts = getAdjustOptions(plan, '2026-05-04') // 周一力量日
-    expect(opts.length).toBe(2)
+    expect(opts.length).toBe(3)
     expect(opts[0].label).toBe('保持原计划')
-    expect(opts[1].label).toBe('重新对齐')
+    expect(opts[1].label).toBe('推迟到最近空档')
+    expect(opts[2].label).toBe('重新对齐')
   })
 
-  it('选项1仅标记错过不改计划', () => {
+  it('选项1仅标记错过不改类型', () => {
     const plan = generatePlan(baseConfig)
     const opts = getAdjustOptions(plan, '2026-05-04')
     const adjusted = opts[0].apply(plan)
@@ -113,10 +114,22 @@ describe('getAdjustOptions', () => {
     expect(adjusted[0].type).toBe('strength') // 类型不变
   })
 
-  it('选项2顺延后续力量日', () => {
+  it('选项2推迟到最近空档', () => {
+    const plan = generatePlan(baseConfig)
+    const opts = getAdjustOptions(plan, '2026-05-04') // 周一力量日
+    const adjusted = opts[1].apply(plan) // 推迟到最近空档
+    expect(adjusted[0].missed).toBe(true)
+    expect(adjusted[0].type).toBe('rest')
+    // 周三（5/6）应变为力量补练
+    const wed = adjusted[2] // 5/6 = 周三
+    expect(wed.type).toBe('strength')
+    expect(wed.details).toContain('补练')
+  })
+
+  it('选项3顺延后续力量日', () => {
     const plan = generatePlan(baseConfig)
     const opts = getAdjustOptions(plan, '2026-05-04')
-    const adjusted = opts[1].apply(plan)
+    const adjusted = opts[2].apply(plan) // 重新对齐
     expect(adjusted[0].missed).toBe(true)
     // 第一个后续力量日（周四）应变为补练
     const thursday = adjusted[3] // 5/7 = 周四
@@ -128,10 +141,11 @@ describe('getAdjustOptions', () => {
     expect(getAdjustOptions(plan, '2099-01-01')).toEqual([])
   })
 
-  it('有氧日没有重新对齐选项', () => {
+  it('有氧日也有推迟选项', () => {
     const plan = generatePlan(baseConfig)
     const opts = getAdjustOptions(plan, '2026-05-05') // 周二有氧日
-    expect(opts.length).toBe(1) // 仅"保持原计划"
+    expect(opts.length).toBe(3) // 保持原计划 + 推迟到最近空档 + 重新对齐
+    expect(opts[1].label).toBe('推迟到最近空档')
   })
 })
 

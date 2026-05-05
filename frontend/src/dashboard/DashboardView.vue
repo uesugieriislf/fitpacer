@@ -238,6 +238,14 @@ const qualityLabels: Record<number, string> = {
   1: '很差', 2: '较差', 3: '一般', 4: '好', 5: '很好'
 }
 
+// 完成率环形颜色
+const rateColor = computed(() => {
+  const r = store.weeklyStats.completionRate
+  if (r >= 80) return '#00B365'
+  if (r >= 50) return '#F59E0B'
+  return '#FF3B30'
+})
+
 // BMI 弹窗
 const showBmiModal = ref(false)
 
@@ -256,6 +264,21 @@ const bmiRanges = [
   { label: '偏胖', range: '24 – 28', color: '#FF6B35' },
   { label: '肥胖', range: '≥ 28', color: '#FF3B30' }
 ]
+
+// 腰围参考标准（中国成人）
+const showWaistModal = ref(false)
+
+const waistRanges = [
+  { label: '正常', range: '男性 < 85 cm / 女性 < 80 cm', color: '#00B365', desc: '中心性肥胖风险低' },
+  { label: '偏高', range: '男性 85–89 cm / 女性 80–84 cm', color: '#FF6B35', desc: '需要关注，建议调整饮食运动' },
+  { label: '高', range: '男性 ≥ 90 cm / 女性 ≥ 85 cm', color: '#FF3B30', desc: '中心性肥胖风险高，建议咨询医生' }
+]
+
+// 格式化时间戳
+function formatTime(createdAt: string): string {
+  const t = createdAt.slice(11, 16) // HH:mm
+  return t
+}
 </script>
 
 <template>
@@ -313,7 +336,16 @@ const bmiRanges = [
       <h2 class="section-title">本周概览</h2>
       <div class="stats-row">
         <div class="stat-item card">
-          <div class="stat-number">{{ animatedValues.completionRate }}%</div>
+          <svg class="stat-ring" viewBox="0 0 60 60">
+            <circle cx="30" cy="30" r="24" fill="none" stroke="var(--color-border-light)" stroke-width="5"/>
+            <circle cx="30" cy="30" r="24" fill="none" :stroke="rateColor" stroke-width="5"
+              stroke-linecap="round"
+              :stroke-dasharray="151"
+              :stroke-dashoffset="151 - (151 * Math.min(animatedValues.completionRate, 100) / 100)"
+              transform="rotate(-90 30 30)"/>
+            <text x="30" y="30" text-anchor="middle" dominant-baseline="central"
+              :fill="rateColor" font-size="16" font-weight="800">{{ animatedValues.completionRate }}%</text>
+          </svg>
           <div class="stat-label">完成率</div>
         </div>
         <div class="stat-item card">
@@ -363,6 +395,7 @@ const bmiRanges = [
           <span class="chart-dot chart-dot-orange"></span>
           <span>腰围趋势</span>
           <span class="chart-unit">cm</span>
+          <button class="btn-waist-info" @click="showWaistModal = true" title="腰围参考标准">ℹ️</button>
         </div>
         <div class="chart-body"><canvas ref="waistCanvas"></canvas></div>
       </div>
@@ -374,7 +407,7 @@ const bmiRanges = [
 
       <div class="body-list card-stagger" v-if="store.bodyData.length > 0">
         <div v-for="item in store.bodyData.slice().reverse().slice(0, 10)" :key="item.id" class="body-item card">
-          <div class="body-item-date">{{ item.date.slice(5) }}</div>
+          <div class="body-item-date">{{ item.date.slice(5) }}<span class="body-item-time">{{ formatTime(item.createdAt) }}</span></div>
           <div class="body-item-metrics">
             <span class="body-metric">⚖️ {{ item.weight }} kg</span>
             <span class="body-metric">📏 {{ item.waist }} cm</span>
@@ -406,6 +439,37 @@ const bmiRanges = [
 
           <div class="form-actions">
             <button class="btn btn-primary" @click="showBmiModal = false">知道了</button>
+          </div>
+        </div>
+      </div>
+    </Teleport>
+
+    <!-- 腰围说明弹窗 -->
+    <Teleport to="body">
+      <div class="modal-overlay" v-if="showWaistModal" @click.self="showWaistModal = false">
+        <div class="modal-content">
+          <h3>关于腰围</h3>
+
+          <p class="bmi-desc">腰围是衡量腹部脂肪堆积（中心性肥胖）的简易指标。中国成人参考标准：</p>
+
+          <div class="bmi-range-list">
+            <div v-for="r in waistRanges" :key="r.label" class="bmi-range-row">
+              <span class="bmi-range-dot" :style="{ background: r.color }"></span>
+              <div class="waist-range-text">
+                <span class="waist-range-label">{{ r.label }}</span>
+                <span class="waist-range-desc">{{ r.desc }}</span>
+              </div>
+              <span class="bmi-range-value">{{ r.range }}</span>
+            </div>
+          </div>
+
+          <p class="bmi-note">
+            测量方法：站立位，软尺绕肚脐上缘 1cm 处水平一周，自然呼气末读数。<br>
+            腰围结合 BMI 可更全面评估健康风险。
+          </p>
+
+          <div class="form-actions">
+            <button class="btn btn-primary" @click="showWaistModal = false">知道了</button>
           </div>
         </div>
       </div>
@@ -542,6 +606,7 @@ const bmiRanges = [
 /* Stats */
 .stats-row { display: flex; gap: 8px; margin-bottom: 12px; }
 .stat-item { flex: 1; text-align: center; padding: 16px 8px; }
+.stat-ring { width: 52px; height: 52px; margin: 0 auto 6px; display: block; }
 .stat-number { font-size: 24px; font-weight: 800; color: var(--color-primary); }
 .stat-label { font-size: 11px; color: var(--color-text-secondary); margin-top: 4px; font-weight: 600; }
 
@@ -560,12 +625,22 @@ const bmiRanges = [
 .chart-dot-green { background: var(--color-primary); }
 .chart-dot-orange { background: var(--color-accent); }
 .chart-unit { margin-left: auto; font-size: 12px; color: var(--color-text-secondary); font-weight: 500; }
+
+/* 腰围信息按钮 */
+.btn-waist-info {
+  background: transparent; border: none; cursor: pointer;
+  font-size: 16px; padding: 0 4px; margin-left: 4px;
+  transition: transform var(--duration-fast) var(--ease-out);
+  line-height: 1;
+}
+.btn-waist-info:active { transform: scale(0.85); }
 .chart-body { height: 180px; }
 
 /* Body list */
 .body-list { display: flex; flex-direction: column; gap: 8px; }
 .body-item { display: flex; align-items: center; gap: 10px; padding: 14px 16px; }
-.body-item-date { font-size: 13px; color: var(--color-text-secondary); min-width: 48px; font-weight: 500; }
+.body-item-date { font-size: 13px; color: var(--color-text-secondary); min-width: 48px; font-weight: 500; display: flex; flex-direction: column; align-items: center; line-height: 1.3; }
+.body-item-time { font-size: 10px; color: var(--color-text-tertiary); font-weight: 400; }
 .body-item-metrics { flex: 1; display: flex; flex-wrap: wrap; gap: 6px 12px; font-size: 13px; }
 .body-metric { font-weight: 500; }
 .body-metric-sleep { background: var(--color-primary-bg); color: var(--color-primary);
@@ -615,6 +690,11 @@ const bmiRanges = [
   font-size: 12px; color: var(--color-text-secondary); line-height: 1.6;
   margin-bottom: 8px; opacity: 0.8;
 }
+
+/* 腰围弹窗 */
+.waist-range-text { flex: 1; display: flex; flex-direction: column; gap: 1px; }
+.waist-range-label { font-size: 15px; font-weight: 600; }
+.waist-range-desc { font-size: 11px; color: var(--color-text-secondary); }
 
 .empty-state { text-align: center; padding: 32px 24px; color: var(--color-text-secondary);
   animation: fadeInUp 0.4s var(--ease-out); }

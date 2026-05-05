@@ -4,7 +4,7 @@ import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import type { DayPlan, PlanConfig, CardioRecord } from './storage'
 import { loadPlan, savePlan, loadConfig, saveConfig } from './storage'
-import { generatePlan, getAdjustOptions, getWeekInfo, getCurrentWeekMonday, formatDate, parseDate, addDays, getNeglectedExercises, ensureDayExercises } from './planEngine'
+import { generatePlan, getAdjustOptions, getWeekInfo, getCurrentWeekMonday, formatDate, parseDate, addDays, getNeglectedExercises, ensureDayExercises, moveToSlot } from './planEngine'
 import { exportICS, getICSBlobUrl, getICSFile } from './ics'
 
 export const usePlan = defineStore('plan', () => {
@@ -35,6 +35,34 @@ export const usePlan = defineStore('plan', () => {
     return wi.days
       .filter(d => d.type === 'cardio' && d.completed && d.cardioRecord)
       .reduce((sum, d) => sum + (d.cardioRecord!.durationMinutes), 0)
+  })
+
+  /** 今日训练信息 */
+  const todayStr = computed(() => formatDate(new Date()))
+
+  const todayPlan = computed(() =>
+    plan.value.find(p => p.date === todayStr.value) ?? null
+  )
+
+  /** 连续打卡天数（从今天往前数连续完成的训练日） */
+  const streakCount = computed(() => {
+    let count = 0
+    const today = todayStr.value
+    // 从今天往前遍历
+    for (let i = plan.value.length - 1; i >= 0; i--) {
+      const day = plan.value[i]
+      if (day.date > today) continue // 跳过未来
+      // 跳过休息日
+      if (day.type === 'rest') continue
+      // 如果训练日已完成
+      if (day.completed) {
+        count++
+      } else {
+        // 遇到未完成的训练日，中断
+        break
+      }
+    }
+    return count
   })
 
   // === 初始化计划 ===
@@ -224,6 +252,14 @@ export const usePlan = defineStore('plan', () => {
     saveConfig(merged)
   }
 
+  /** 手动将某天训练推迟到指定空档日 */
+  function postponeToDate(fromDate: string, toDate: string) {
+    plan.value = moveToSlot(plan.value, fromDate, toDate)
+    savePlan(plan.value)
+    showAdjustModal.value = false
+    adjustDate.value = null
+  }
+
   return {
     // 状态
     plan,
@@ -239,6 +275,9 @@ export const usePlan = defineStore('plan', () => {
     hasPlan,
     neglectedExercises,
     weekCardioMinutes,
+    todayStr,
+    todayPlan,
+    streakCount,
     // 方法
     initPlan,
     ensurePlan,
@@ -251,6 +290,7 @@ export const usePlan = defineStore('plan', () => {
     skipDay,
     applyAdjustOption,
     cancelAdjust,
+    postponeToDate,
     goToWeek,
     goToCurrentWeek,
     handleExportICS,

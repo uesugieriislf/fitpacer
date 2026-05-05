@@ -159,7 +159,7 @@ export function getAdjustOptions(plan: DayPlan[], missedDate: string): AdjustOpt
   const options: AdjustOption[] = []
 
   // 选项 1：保持原计划
-  options.push({
+  options.push(<AdjustOption>{
     label: '保持原计划',
     description: '仅标记本次错过，后续计划不变',
     apply: (plan: DayPlan[]) => {
@@ -169,52 +169,128 @@ export function getAdjustOptions(plan: DayPlan[], missedDate: string): AdjustOpt
     }
   })
 
-  // 选项 2：重新对齐（仅力量日有效）
+  // 选项 2：推迟到最近空档（有可用休息日时才提供）
+  const nextSlot = findNextSlot(plan, missedDate)
+  if (nextSlot) {
+    options.push(<AdjustOption>{
+      label: '推迟到最近空档',
+      description: `将本次训练推迟到 ${nextSlot.slice(5)}，不改后续计划`,
+      apply: (plan: DayPlan[]) => moveToSlot(plan, missedDate, nextSlot)
+    })
+  }
+
+  // 选项 3：重新对齐（级联调整后续同类型训练，维持合理间隔）
   if (day.type === 'strength') {
-    options.push({
+    options.push(<AdjustOption>{
       label: '重新对齐',
-      description: '将错过的力量训练顺延至最近空档，维持 72 小时间隔',
+      description: '将力量训练顺延至最近空档，并重排后续力量日，维持 72 小时间隔',
       apply: (plan: DayPlan[]) => realignStrength(plan, missedDate)
+    })
+  } else if (day.type === 'cardio' && nextSlot) {
+    options.push(<AdjustOption>{
+      label: '重新对齐',
+      description: '推迟到最近空档，并顺延后续有氧日，保持每周训练节奏',
+      apply: (plan: DayPlan[]) => realignCardio(plan, missedDate, nextSlot)
     })
   }
 
   return options
 }
 
-/** 重新对齐：插入补练并顺延后续力量日，保持非连续原则 */
-function realignStrength(plan: DayPlan[], missedDate: string): DayPlan[] {
-  const newPlan = plan.map(p => ({ ...p }))
+/** 将某天的训练内容整体移动到另一个空档日，并标注来源 */
+export function moveToSlot(plan: DayPlan[], fromDate: string, toDate: string): DayPlan[] {
+  const fromDay = plan.find(p => p.date === fromDate)
+  const toDay = plan.find(p => p.date === toDate)
+  if (!fromDay || !toDay || toDay.type !== 'rest') return plan
 
-  // 标记错过
-  const missedIdx = newPlan.findIndex(p => p.date === missedDate)
-  if (missedIdx !== -1) {
-    newPlan[missedIdx] = { ...newPlan[missedIdx], missed: true }
+  const sourceLabel = fromDate.slice(5, 10) // MM-DD
+
+  return plan.map(p => {
+    if (p.date === fromDate) {
+      return {
+        ...p,
+        type: 'rest',
+        missed: true,
+        completed: false,
+        details: '',
+        exercises: [],
+        cardioRecord: null
+      }
+    }
+    if (p.date === toDate) {
+      // 目标日期继承原训练内容，标注来源
+      const baseDetails = fromDay.type === 'strength'
+        ? getStrengthDetails()
+        : (fromDay.details || '')
+      const exercises = fromDay.type === 'strength'
+        ? getStrengthExercises()
+        : getCardioExercises(fromDay.details?.includes('长有氧') ?? false)
+      return {
+        ...toDay,
+        type: fromDay.type,
+        completed: false,
+        missed: false,
+        details: `📌 从 ${sourceLabel} 补练：${baseDetails}`,
+        exercises: exercises.map(e => ({ ...e, completed: false })),
+        cardioRecord: null
+      }
+    }
+    return { ...p }
+  })
+}
+
+/** 有氧日重新对齐：推到最近空档并顺延后续有氧日 */
+function realignCardio(plan: DayPlan[], missedDate: string, firstSlot: string): DayPlan[] {
+  let current = moveToSlot(plan, missedDate, firstSlot)
+
+  // 找到后续有氧日并顺延
+  const missedIdx = plan.findIndex(p => p.date === missedDate)
+  const cardioIndices: number[] = []
+  for (let i = missedIdx + 1; i < plan.length; i++) {
+    if (current[i]?.type === 'cardio' && !current[i].completed) {
+      cardioIndices.push(i)
+    }
   }
 
-  // 找到后续所有的力量日（未完成的）
+  // 顺延：每个有氧日向后推一天，找到空档
+  for (const ci of cardioIndices) {
+    const date = current[ci].date
+    const nextRest = findNextSlot(current, date)
+    if (nextRest) {
+      current = moveToSlot(current, date, nextRest)
+    }
+  }
+
+  return current
+}
+
+/** 重新对齐：插入补练并顺延后续力量日，保持非连续原则 */
+function realignStrength(plan: DayPlan[], missedDate: string): DayPlan[] {
+  // 先用 moveToSlot 把错过的训练推到下一个空档
+  const firstSlot = findNextSlot(plan, missedDate)
+  if (!firstSlot) {
+    // 没有空档，仅标记错过
+    return plan.map(p => p.date === missedDate ? { ...p, missed: true } : { ...p })
+  }
+
+  let newPlan = moveToSlot(plan, missedDate, firstSlot)
+
+  // 找到后续所有力量日（未完成的）
   const strengthIndices: number[] = []
-  for (let i = missedIdx + 1; i < newPlan.length; i++) {
-    if (newPlan[i].type === 'strength' && !newPlan[i].completed) {
+  for (let i = 0; i < newPlan.length; i++) {
+    if (newPlan[i].type === 'strength' && !newPlan[i].completed && newPlan[i].date >= missedDate) {
       strengthIndices.push(i)
     }
   }
 
-  if (strengthIndices.length === 0) return newPlan
-
-  // 将第一个后续力量日变为补练日
-  const firstStrengthIdx = strengthIndices[0]
-  newPlan[firstStrengthIdx] = {
-    ...newPlan[firstStrengthIdx],
-    details: '⚠️ 补练：' + getStrengthDetails()
-  }
-
   // 顺延后续力量日：每个力量日向后推到下一个 rest 日（至少隔一天）
-  for (let si = 1; si < strengthIndices.length; si++) {
-    const prevDate = strengthIndices[si - 1]
-    const prevNewDate = newPlan[prevDate].date
+  for (let si = 0; si < strengthIndices.length; si++) {
+    const prevDate = strengthIndices[si] === 0
+      ? firstSlot
+      : newPlan[strengthIndices[si - 1]].date
 
-    // 在原力量日 + 3 天后找最近的 rest 日
-    let targetDate = addDays(parseDate(prevNewDate), 3)
+    // 在 + 3 天后找最近的 rest 日
+    let targetDate = addDays(parseDate(prevDate), 3)
     let targetIdx = newPlan.findIndex(p => p.date === formatDate(targetDate))
 
     while (targetIdx >= 0 && targetIdx < newPlan.length) {
@@ -224,25 +300,9 @@ function realignStrength(plan: DayPlan[], missedDate: string): DayPlan[] {
     }
 
     if (targetIdx >= 0 && targetIdx < newPlan.length) {
-      const orig = newPlan[strengthIndices[si]]
-      newPlan[targetIdx] = {
-        date: newPlan[targetIdx].date,
-        type: 'strength',
-        completed: false,
-        missed: false,
-        details: getStrengthDetails(),
-        exercises: getStrengthExercises(),
-        cardioRecord: null
-      }
-      newPlan[strengthIndices[si]] = {
-        date: orig.date,
-        type: 'rest',
-        completed: false,
-        missed: false,
-        details: '',
-        exercises: [],
-        cardioRecord: null
-      }
+      const origDate = newPlan[strengthIndices[si]].date
+      const targetDate = newPlan[targetIdx].date
+      newPlan = moveToSlot(newPlan, origDate, targetDate)
     }
   }
 
@@ -283,6 +343,20 @@ export function findNextSlot(plan: DayPlan[], fromDate: string): string | null {
     }
   }
   return null
+}
+
+/** 查找某日期之后所有可用空档（最多返回 N 个） */
+export function findAvailableSlots(plan: DayPlan[], fromDate: string, maxCount = 7): string[] {
+  const fromIdx = plan.findIndex(p => p.date === fromDate)
+  if (fromIdx === -1) return []
+
+  const slots: string[] = []
+  for (let i = fromIdx + 1; i < plan.length && slots.length < maxCount; i++) {
+    if (plan[i].type === 'rest' && !plan[i].completed) {
+      slots.push(plan[i].date)
+    }
+  }
+  return slots
 }
 
 // === 周视图工具 ===

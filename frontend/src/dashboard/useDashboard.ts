@@ -11,8 +11,12 @@ export const useDashboard = defineStore('dashboard', () => {
   const bodyData = ref<BodyData[]>(loadBodyData())
 
   // === 身体数据 CRUD ===
-  function addBodyData(entry: Omit<BodyData, 'id'>) {
-    const item: BodyData = { id: generateId(), ...entry }
+  function addBodyData(entry: Omit<BodyData, 'id' | 'createdAt'>) {
+    const item: BodyData = {
+      id: generateId(),
+      createdAt: new Date().toISOString().replace('T', 'T').slice(0, 19),
+      ...entry
+    }
     bodyData.value = [...bodyData.value, item]
     saveBodyData(bodyData.value)
   }
@@ -87,7 +91,7 @@ export const useDashboard = defineStore('dashboard', () => {
 
     return bodyData.value
       .filter(d => d.date >= cutoff)
-      .sort((a, b) => a.date.localeCompare(b.date))
+      .sort((a, b) => a.createdAt.localeCompare(b.createdAt))
   })
 
   // Chart.js 数据格式

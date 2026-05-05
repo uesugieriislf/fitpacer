@@ -15,10 +15,10 @@ export const useGoal = defineStore('goal', () => {
     saveGoal(config.value)
   }
 
-  // === 当前体重（来自 Dashboard 的最新身体数据） ===
+  // === 当前体重（来自 Dashboard 的最新身体数据，按 createdAt 取最新） ===
   const currentWeight = computed(() => {
     const dash = useDashboard()
-    const sorted = [...dash.bodyData].sort((a, b) => b.date.localeCompare(a.date))
+    const sorted = [...dash.bodyData].sort((a, b) => b.createdAt.localeCompare(a.createdAt))
     return sorted.length > 0 ? sorted[0].weight : null
   })
 

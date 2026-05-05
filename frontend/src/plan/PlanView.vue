@@ -3,7 +3,7 @@ import { onMounted, computed, ref, reactive, watch } from 'vue'
 import { usePlan } from './usePlan'
 import { useSettings } from '../settings/useSettings'
 import { getTypeIcon, getTypeLabel, weekdayLabels } from '../shared/icons'
-import { getAdjustOptions, CARDIO_ACTIONS, ensureDayExercises } from './planEngine'
+import { getAdjustOptions, CARDIO_ACTIONS, ensureDayExercises, findAvailableSlots } from './planEngine'
 import type { DayPlan, CardioRecord, ExerciseItem } from './storage'
 
 const store = usePlan()
@@ -104,6 +104,26 @@ function isNeglected(name: string): boolean {
   return store.neglectedExercises.has(name)
 }
 
+// 手动选日期推迟
+const showDatePicker = ref(false)
+const datePickerSlots = ref<{ date: string; label: string }[]>([])
+
+function openDatePicker() {
+  if (!store.adjustDate) return
+  const slots = findAvailableSlots(store.plan, store.adjustDate)
+  datePickerSlots.value = slots.map(s => ({
+    date: s,
+    label: `${s.slice(5)} 周${['日','一','二','三','四','五','六'][new Date(s + 'T00:00:00').getDay()]}`
+  }))
+  showDatePicker.value = true
+}
+
+function applyDatePick(slotDate: string) {
+  if (!store.adjustDate) return
+  store.postponeToDate(store.adjustDate, slotDate)
+  showDatePicker.value = false
+}
+
 function completionPct(day: DayPlan): number {
   if (!day.exercises || day.exercises.length === 0) return 0
   return Math.round((day.exercises.filter(e => e.completed).length / day.exercises.length) * 100)
@@ -124,6 +144,45 @@ const cardioDiff = computed(() => {
   const diff = cardioTarget.value - store.weekCardioMinutes
   return diff > 0 ? `还差 ${diff} 分钟` : `已超过 ${-diff} 分钟`
 })
+
+/** 今日看板数据 */
+const weekdayName = computed(() => {
+  const d = new Date()
+  return ['周日','周一','周二','周三','周四','周五','周六'][d.getDay()]
+})
+
+const todayAction = computed(() => {
+  const tp = store.todayPlan
+  if (!tp) return { icon: '📅', label: '暂无计划', color: 'var(--color-rest)', sub: '' }
+  if (tp.type === 'rest') return { icon: '😴', label: '休息日', color: 'var(--color-rest)', sub: '恢复身体，明天继续' }
+  if (tp.type === 'strength') {
+    const done = tp.exercises.filter(e => e.completed).length
+    const total = tp.exercises.length
+    const pct = total > 0 ? Math.round(done / total * 100) : 0
+    return { icon: '💪', label: '力量训练', color: 'var(--color-strength)', sub: `${done}/${total}  · ${pct}%` }
+  }
+  if (tp.type === 'cardio') {
+    const done = tp.completed
+    return { icon: '🏃', label: '有氧训练', color: 'var(--color-cardio)', sub: done ? '已完成' : (tp.details || '35-40 分钟') }
+  }
+  return { icon: '📅', label: '—', color: 'var(--color-rest)', sub: '' }
+})
+
+const todayPct = computed(() => {
+  const tp = store.todayPlan
+  if (!tp || tp.type === 'rest') return 0
+  if (tp.type === 'strength') {
+    const total = tp.exercises.length
+    const done = tp.exercises.filter(e => e.completed).length
+    return total > 0 ? Math.round(done / total * 100) : 0
+  }
+  return tp.completed ? 100 : 0
+})
+
+const todayDone = computed(() => {
+  const tp = store.todayPlan
+  return tp ? tp.completed : false
+})
 </script>
 
 <template>
@@ -136,6 +195,61 @@ const cardioDiff = computed(() => {
           <button class="btn btn-primary btn-sm" @click="store.handleExportICS">导出</button>
         </div>
       </div>
+
+      <!-- 今日概览 -->
+      <div class="today-overview" v-if="store.hasPlan">
+        <div class="today-ring-block">
+          <svg class="progress-ring" viewBox="0 0 80 80">
+            <circle class="ring-track" cx="40" cy="40" r="34" fill="none" stroke-width="5"/>
+            <circle class="ring-fill" cx="40" cy="40" r="34" fill="none" stroke-width="5"
+              :stroke="todayAction.color"
+              :stroke-dasharray="214"
+              :stroke-dashoffset="214 - (214 * todayPct / 100)"
+              stroke-linecap="round"
+              transform="rotate(-90 40 40)"/>
+            <text x="40" y="40" text-anchor="middle" dominant-baseline="central"
+              :fill="todayDone ? 'var(--color-primary)' : 'var(--color-text)'"
+              font-size="20" font-weight="700">{{ todayDone ? '✓' : todayPct + '%' }}</text>
+          </svg>
+        </div>
+        <div class="today-info">
+          <div class="today-date">
+            <span class="today-date-num">{{ new Date().getDate() }}</span>
+            <span class="today-date-text">{{ weekdayName }} · {{ (new Date().getMonth()+1) }}月</span>
+          </div>
+          <div class="today-action-row">
+            <span class="today-icon">{{ todayAction.icon }}</span>
+            <span class="today-label" :style="{ color: todayAction.color }">{{ todayAction.label }}</span>
+            <span class="today-sub">{{ todayAction.sub }}</span>
+          </div>
+          <div class="today-streak" v-if="store.streakCount > 0">
+            <span class="streak-fire">🔥</span>
+            <span class="streak-text">连续打卡 {{ store.streakCount }} 天</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 有氧进度环 -->
+      <div class="cardio-ring-row" v-if="store.hasPlan">
+        <div class="cardio-ring-item">
+          <svg class="progress-ring-sm" viewBox="0 0 44 44">
+            <circle cx="22" cy="22" r="17" fill="none" stroke="var(--color-border-light)" stroke-width="4"/>
+            <circle cx="22" cy="22" r="17" fill="none" stroke="var(--color-cardio)" stroke-width="4"
+              stroke-linecap="round"
+              :stroke-dasharray="107"
+              :stroke-dashoffset="107 - (107 * cardioPct / 100)"
+              transform="rotate(-90 22 22)"/>
+            <text x="22" y="22" text-anchor="middle" dominant-baseline="central"
+              font-size="10" font-weight="700" fill="var(--color-cardio)">{{ cardioPct }}%</text>
+          </svg>
+          <span class="cardio-ring-label">有氧</span>
+        </div>
+        <div class="cardio-ring-text">
+          <span class="cardio-ring-title">{{ cardioLabel }}</span>
+          <span class="cardio-ring-diff">{{ cardioDiff }}</span>
+        </div>
+      </div>
+
       <div class="week-nav">
         <button class="btn btn-ghost week-arrow" @click="store.goToWeek(-1)">‹</button>
         <span class="week-label">{{ weekLabel }}</span>
@@ -144,16 +258,7 @@ const cardioDiff = computed(() => {
     </div>
 
     <div class="view-body">
-    <!-- 有氧进度条 -->
-    <div class="cardio-progress" v-if="store.hasPlan">
-      <div class="cardio-progress-text">
-        <span>{{ cardioLabel }}</span>
-        <span class="cardio-diff">{{ cardioDiff }}</span>
-      </div>
-      <div class="cardio-progress-bar">
-        <div class="cardio-progress-fill" :style="{ width: cardioPct + '%' }"></div>
-      </div>
-    </div>
+    <!-- 有氧进度条（删除，已替换为环） -->
 
     <div class="day-list card-stagger" v-if="weekInfo">
       <div v-for="day in weekInfo.days" :key="day.date"
@@ -169,6 +274,7 @@ const cardioDiff = computed(() => {
             <span class="day-date-wd">周{{ weekdayLabels[new Date(day.date + 'T00:00:00').getDay()] }}</span>
           </div>
           <span v-if="isToday(day.date)" class="today-tag">今天</span>
+          <span v-if="day.details?.startsWith('📌')" class="makeup-tag">补练</span>
           <span :class="['badge', getBadgeClass(day.type)]">{{ getTypeLabel(day.type) }}</span>
         </div>
 
@@ -252,7 +358,34 @@ const cardioDiff = computed(() => {
             <strong>{{ opt.label }}</strong>
             <p>{{ opt.description }}</p>
           </div>
+          <div class="adj-option card adj-manual" @click="openDatePicker">
+            <strong>📅 手动选日期推迟</strong>
+            <p>从后续休息日中选一天推迟训练</p>
+          </div>
           <button class="btn btn-ghost" style="margin-top:12px" @click="store.cancelAdjust">取消</button>
+        </div>
+      </div>
+    </Teleport>
+
+    <!-- 手动选日期弹窗 -->
+    <Teleport to="body">
+      <div class="modal-overlay" v-if="showDatePicker" @click.self="showDatePicker = false">
+        <div class="modal-content">
+          <h3>选择推迟日期</h3>
+          <p class="modal-desc">将 {{ store.adjustDate }} 的训练推迟到：</p>
+          <div class="slot-list">
+            <div v-for="slot in datePickerSlots" :key="slot.date"
+              class="slot-item card" @click="applyDatePick(slot.date)">
+              <span class="slot-date">{{ slot.label }}</span>
+              <span class="slot-arrow">→</span>
+            </div>
+            <div v-if="datePickerSlots.length === 0" class="empty-state" style="padding:24px">
+              <p>没有可用的休息日</p>
+            </div>
+          </div>
+          <div class="form-actions">
+            <button class="btn btn-ghost" @click="showDatePicker = false">取消</button>
+          </div>
         </div>
       </div>
     </Teleport>
@@ -350,23 +483,47 @@ const cardioDiff = computed(() => {
 .header-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
 .header-actions { display: flex; gap: 6px; }
 
-.week-nav { display: flex; align-items: center; justify-content: center; gap: 16px; padding: 8px 0 12px; }
+.week-nav { display: flex; align-items: center; justify-content: center; gap: 16px; padding: 6px 0 8px; }
 .week-arrow { font-size: 20px; font-weight: 400; color: var(--color-text); padding: 4px 12px; }
 .week-label { font-size: 14px; font-weight: 650; min-width: 140px; text-align: center; color: var(--color-text); }
 
-/* 有氧进度条 — sticky 固定 */
-.cardio-progress {
-  position: sticky; top: -1px; z-index: 5;
-  margin: 0 0 8px; padding: 12px 14px;
-  background: var(--color-surface); border-radius: var(--radius-sm);
+/* 今日概览 */
+.today-overview {
+  display: flex; align-items: center; gap: 14px;
+  padding: 12px 14px; margin: 0 0 8px;
+  background: var(--color-surface); border-radius: var(--radius);
   box-shadow: var(--shadow-sm);
+  animation: fadeInUp 0.3s var(--ease-out);
 }
-.cardio-progress-text { display: flex; justify-content: space-between; align-items: baseline;
-  font-size: 13px; font-weight: 550; margin-bottom: 8px; }
-.cardio-diff { font-size: 11px; color: var(--color-text-secondary); font-weight: 500; }
-.cardio-progress-bar { height: 6px; background: var(--color-border-light); border-radius: 3px; overflow: hidden; }
-.cardio-progress-fill { height: 100%; background: var(--color-cardio); border-radius: 3px;
-  transition: width 0.5s var(--ease-out); }
+.today-ring-block { flex-shrink: 0; }
+.progress-ring { width: 64px; height: 64px; }
+.ring-track { stroke: var(--color-border-light); }
+.ring-fill { transition: stroke-dashoffset 0.6s var(--ease-out); }
+.today-info { flex: 1; min-width: 0; }
+.today-date { display: flex; align-items: baseline; gap: 8px; margin-bottom: 6px; }
+.today-date-num { font-size: 28px; font-weight: 800; line-height: 1; letter-spacing: -0.5px; color: var(--color-text); }
+.today-date-text { font-size: 13px; color: var(--color-text-secondary); font-weight: 500; }
+.today-action-row { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.today-icon { font-size: 18px; line-height: 1; }
+.today-label { font-size: 15px; font-weight: 650; letter-spacing: -0.2px; }
+.today-sub { font-size: 12px; color: var(--color-text-secondary); font-weight: 500; }
+.today-streak { margin-top: 6px; display: flex; align-items: center; gap: 4px; }
+.streak-fire { font-size: 14px; line-height: 1; animation: pulse 2s ease-in-out infinite; }
+.streak-text { font-size: 12px; font-weight: 600; color: var(--color-accent); }
+
+/* 有氧进度环 */
+.cardio-ring-row {
+  display: flex; align-items: center; gap: 10px;
+  padding: 8px 14px; margin: 0 0 6px;
+  background: var(--color-surface); border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-xs);
+}
+.cardio-ring-item { display: flex; flex-direction: column; align-items: center; gap: 2px; flex-shrink: 0; }
+.progress-ring-sm { width: 36px; height: 36px; }
+.cardio-ring-label { font-size: 9px; color: var(--color-text-tertiary); font-weight: 500; }
+.cardio-ring-text { flex: 1; display: flex; flex-direction: column; gap: 2px; }
+.cardio-ring-title { font-size: 13px; font-weight: 600; color: var(--color-text); }
+.cardio-ring-diff { font-size: 11px; color: var(--color-text-secondary); font-weight: 500; }
 
 .day-list { display: flex; flex-direction: column; gap: 8px; padding-bottom: 100px; }
 
@@ -385,6 +542,13 @@ const cardioDiff = computed(() => {
 .day-date-wd { font-size: 11px; color: var(--color-text-secondary); font-weight: 500; }
 .today-tag { background: var(--color-primary); color: #fff; padding: 2px 8px; border-radius: 10px;
   font-size: 10px; font-weight: 600; animation: bounceIn 0.4s var(--ease-bounce); }
+
+/* 补练标签 */
+.makeup-tag {
+  background: var(--color-accent-bg); color: var(--color-accent);
+  padding: 2px 8px; border-radius: 10px; font-size: 10px; font-weight: 700;
+  animation: pulse 2s ease-in-out infinite;
+}
 
 /* 展开控制区 —— 大点击区域 */
 .day-detail-area {
@@ -468,6 +632,15 @@ const cardioDiff = computed(() => {
   transition: all var(--duration-fast) var(--ease-out); }
 .adj-option:active { transform: scale(0.98); border-color: var(--color-primary); background: var(--color-primary-bg); }
 .adj-option p { font-size: 13px; color: var(--color-text-secondary); margin-top: 4px; }
+.adj-manual { border-color: var(--color-border); background: var(--color-primary-bg); }
+
+/* 手动选日期 */
+.slot-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 8px; }
+.slot-item { display: flex; align-items: center; justify-content: space-between; padding: 14px 16px;
+  cursor: pointer; transition: all var(--duration-fast) var(--ease-out); }
+.slot-item:active { transform: scale(0.98); background: var(--color-primary-bg); }
+.slot-date { font-size: 15px; font-weight: 600; }
+.slot-arrow { font-size: 16px; color: var(--color-primary); }
 
 .empty-state { text-align: center; padding: 40px 20px; animation: fadeInUp 0.4s var(--ease-out); }
 .empty-state .empty-icon { font-size: 48px; margin-bottom: 12px; display: block; animation: float 3s ease-in-out infinite; }
