@@ -14,8 +14,11 @@ function onToggleDay(day: number) { settingsStore.toggleTrainingDay(day) }
 
 <template>
   <div class="view">
-    <h1 class="view-title">设置</h1>
+    <div class="view-header">
+      <h1 class="view-title">设置</h1>
+    </div>
 
+    <div class="view-body">
     <section class="section">
       <div class="section-title-row">
         <h2 class="section-title">减重目标</h2>
@@ -104,12 +107,15 @@ function onToggleDay(day: number) { settingsStore.toggleTrainingDay(day) }
       <p>FitPacer — 极简智能个人训练助手</p>
       <p class="version">v1.0 · PWA</p>
     </section>
+    </div>
   </div>
 </template>
 
 <style scoped>
-.view { flex: 1; overflow-y: auto; padding: 24px 20px; padding-bottom: 100px; }
-.view-title { font-size: 28px; font-weight: 700; margin-bottom: 24px; letter-spacing: -0.5px; }
+.view { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+.view-header { flex-shrink: 0; padding: 24px 20px 12px; }
+.view-body { flex: 1; overflow-y: auto; padding: 16px 20px 100px; }
+.view-title { font-size: 28px; font-weight: 700; letter-spacing: -0.5px; }
 .section { margin-bottom: 32px; }
 .section-title-row { display: flex; align-items: center; gap: 10px; margin-bottom: 4px; }
 .section-title { font-size: 20px; font-weight: 650; letter-spacing: -0.3px; }

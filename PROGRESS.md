@@ -114,3 +114,4 @@
 | 2026-05-05 | 训练计划调整为 3 次有氧（周二/周五/周六），总时长 150min/周；新增 goal/ 模块（目标设定+BMI+进度条）；BodyData 增加 sleepHours；Settings 增加身高/目标体重设定；Dashboard 增加目标进度卡片 | #1 |
 | 2026-05-05 | **动画与样式大升级**：新增 16 个 CSS 动画关键帧（slideInLeft/Right, scaleInBounce, bounceIn, shimmer, float, ripple, overlayIn, listItemIn 等）；玻璃态模态框（backdrop-filter）；按钮涟漪动效；卡片按压缩放；标签切换左右滑入过渡；底部导航弹跳效果；仪表盘统计数字滚动动画（requestAnimationFrame）；图表渐入显示；睡眠步进器从 0.25h 精确至 0.1h（6 分钟），显示格式改为"X小时Y分钟" | #2 |
 | 2026-05-05 | **选择器 + Keep 风格升级**：RecordView 接入 usePlan，根据当天计划自动推断训练类型并只显示对应动作组（力量日显示力量动作，有氧日显示有氧动作，休息日可自由记录）；设计系统全面参考 Keep：主色修订为 #00B365（更鲜亮的 Keep 绿）、暗色主题背景改为纯黑 (#000)、卡片去除边框改用柔和阴影、圆角半径阶梯增大、字体使用 SF Pro 原生栈、底部导航简化去除顶部指示条、排版层级重新校准 | #3 |
+| 2026-05-05 | **标题固定 + 睡眠选择器修复**：所有视图改为标题固定+内容区独立滚动（flex column 布局）；睡眠选择器从10分钟一档改为5分钟一档（0-55）；修复 scroll 事件中间状态导致值不准（改为 scrollend 事件）；修正 openBodyForm 的 snap 逻辑（Math.round(m/5)*5） | #3 |

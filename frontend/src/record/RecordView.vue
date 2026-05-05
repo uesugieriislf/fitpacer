@@ -74,8 +74,11 @@ function isToday(d: string): boolean {
 
 <template>
   <div class="view">
-    <h1 class="view-title">训练记录</h1>
+    <div class="view-header">
+      <h1 class="view-title">训练记录</h1>
+    </div>
 
+    <div class="view-body">
     <!-- 日期导航 -->
     <div class="date-nav">
       <button class="btn btn-ghost date-arrow" @click="changeDate(-1)">‹</button>
@@ -179,12 +182,15 @@ function isToday(d: string): boolean {
         <button class="btn btn-primary" @click="submitRecord">保存</button>
       </div>
     </div>
+    </div>
   </div>
 </template>
 
 <style scoped>
-.view { flex: 1; overflow-y: auto; padding: 24px 20px; padding-bottom: 100px; }
-.view-title { font-size: 28px; font-weight: 700; margin-bottom: 20px; letter-spacing: -0.5px; }
+.view { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+.view-header { flex-shrink: 0; padding: 24px 20px 12px; }
+.view-body { flex: 1; overflow-y: auto; padding: 16px 20px 100px; }
+.view-title { font-size: 28px; font-weight: 700; letter-spacing: -0.5px; }
 
 .date-nav { display: flex; align-items: center; justify-content: center; gap: 16px; margin-bottom: 16px; }
 .date-arrow { font-size: 28px; font-weight: 300; color: var(--color-text); padding: 4px 12px; }

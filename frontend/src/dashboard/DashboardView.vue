@@ -33,8 +33,8 @@ const minutesPicker = ref<HTMLDivElement | null>(null)
 
 // 小时列表 1-16
 const hoursList = Array.from({ length: 16 }, (_, i) => i + 1)
-// 分钟列表：0, 10, 20, 30, 40, 50
-const minutesList = [0, 10, 20, 30, 40, 50]
+// 分钟列表：0-55，每5分钟一档
+const minutesList = [0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55]
 
 function openBodyForm() {
   formWeight.value = goalStore.currentWeight ?? 70
@@ -43,14 +43,14 @@ function openBodyForm() {
   const h = Math.floor(total)
   const m = Math.round((total - h) * 60)
   formSleepHours.value = Math.max(1, Math.min(16, h || 7))
-  formSleepMinutes.value = m % 10 < 5 ? Math.floor(m / 10) * 10 : Math.round(m / 10) * 10
+  formSleepMinutes.value = Math.round(m / 5) * 5
   if (formSleepMinutes.value >= 60) { formSleepMinutes.value -= 60; formSleepHours.value++ }
   formSleepQuality.value = 3
   formSoreness.value = 2
   showBodyForm.value = true
   nextTick(() => {
     scrollPickerTo(hoursPicker.value, formSleepHours.value - 1)
-    scrollPickerTo(minutesPicker.value, formSleepMinutes.value / 10)
+    scrollPickerTo(minutesPicker.value, formSleepMinutes.value / 5)
   })
 }
 
@@ -60,16 +60,16 @@ function scrollPickerTo(el: HTMLElement | null, index: number) {
   el.scrollTop = index * itemH
 }
 
-function onHoursScroll() {
+function onHoursScrollEnd() {
   if (!hoursPicker.value) return
   const idx = Math.round(hoursPicker.value.scrollTop / 48)
   formSleepHours.value = Math.max(1, Math.min(16, idx + 1))
 }
 
-function onMinutesScroll() {
+function onMinutesScrollEnd() {
   if (!minutesPicker.value) return
   const idx = Math.round(minutesPicker.value.scrollTop / 48)
-  formSleepMinutes.value = Math.min(50, Math.max(0, idx * 10))
+  formSleepMinutes.value = Math.min(55, Math.max(0, idx * 5))
 }
 
 const totalSleepHours = () => {
@@ -222,8 +222,11 @@ const qualityLabels: Record<number, string> = {
 
 <template>
   <div class="view">
-    <h1 class="view-title">数据看板</h1>
+    <div class="view-header">
+      <h1 class="view-title">数据看板</h1>
+    </div>
 
+    <div class="view-body">
     <!-- 目标进度 -->
     <section class="section">
       <div class="section-header">
@@ -371,7 +374,7 @@ const qualityLabels: Record<number, string> = {
               <div class="picker-indicator"></div>
               <div class="picker-row">
                 <!-- 小时 -->
-                <div class="picker-col" ref="hoursPicker" @scroll.passive="onHoursScroll">
+                <div class="picker-col" ref="hoursPicker" @scrollend.passive="onHoursScrollEnd">
                   <div class="picker-col-inner">
                     <div
                       v-for="h in hoursList" :key="h"
@@ -382,13 +385,13 @@ const qualityLabels: Record<number, string> = {
                   </div>
                 </div>
                 <!-- 分钟 -->
-                <div class="picker-col" ref="minutesPicker" @scroll.passive="onMinutesScroll">
+                <div class="picker-col" ref="minutesPicker" @scrollend.passive="onMinutesScrollEnd">
                   <div class="picker-col-inner">
                     <div
                       v-for="m in minutesList" :key="m"
                       class="picker-item"
                       :class="{ 'picker-item-active': m === formSleepMinutes }"
-                      @click="formSleepMinutes = m; scrollPickerTo(minutesPicker as any, m / 10)"
+                      @click="formSleepMinutes = m; scrollPickerTo(minutesPicker as any, m / 5)"
                     >{{ String(m).padStart(2, '0') }} 分</div>
                   </div>
                 </div>
@@ -420,16 +423,25 @@ const qualityLabels: Record<number, string> = {
         </div>
       </div>
     </Teleport>
+    </div>
   </div>
 </template>
 
 <style scoped>
 .view {
-  flex: 1; overflow-y: auto; padding: 24px 20px; padding-bottom: 100px;
+  flex: 1; display: flex; flex-direction: column; overflow: hidden;
+}
+
+.view-header {
+  flex-shrink: 0; padding: 24px 20px 12px;
+}
+
+.view-body {
+  flex: 1; overflow-y: auto; padding: 16px 20px 100px;
 }
 
 .view-title {
-  font-size: 28px; font-weight: 700; margin-bottom: 24px; letter-spacing: -0.5px;
+  font-size: 28px; font-weight: 700; letter-spacing: -0.5px;
 }
 
 .section { margin-bottom: 32px; }

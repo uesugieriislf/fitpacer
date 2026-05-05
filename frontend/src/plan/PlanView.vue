@@ -37,6 +37,7 @@ function getAdjustOptionsForDate(plan: DayPlan[], date: string) {
       </div>
     </div>
 
+    <div class="view-body">
     <div class="week-nav">
       <button class="btn btn-ghost week-arrow" @click="store.goToWeek(-1)">‹</button>
       <span class="week-label">{{ weekLabel }}</span>
@@ -92,12 +93,14 @@ function getAdjustOptionsForDate(plan: DayPlan[], date: string) {
         </div>
       </div>
     </Teleport>
+    </div>
   </div>
 </template>
 
 <style scoped>
-.view { flex: 1; overflow-y: auto; padding: 24px 20px; padding-bottom: 100px; }
-.view-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+.view { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+.view-header { flex-shrink: 0; display: flex; justify-content: space-between; align-items: center; padding: 24px 20px 12px; }
+.view-body { flex: 1; overflow-y: auto; padding: 16px 20px 100px; }
 .view-title { font-size: 28px; font-weight: 700; letter-spacing: -0.5px; }
 .header-actions { display: flex; gap: 8px; }
 
