@@ -31,10 +31,17 @@ const formSoreness = ref(2)
 const hoursPicker = ref<HTMLDivElement | null>(null)
 const minutesPicker = ref<HTMLDivElement | null>(null)
 
-// 小时列表 1-16
+// 小时列表 1-16 — 三段循环（中间段为真实段）
 const hoursList = Array.from({ length: 16 }, (_, i) => i + 1)
-// 分钟列表：0-55，每5分钟一档
+const hoursListExt = [...hoursList, ...hoursList, ...hoursList]
+const HOURS_N = 16
+const HOURS_MID = HOURS_N // 中间段起始索引
+
+// 分钟列表：0-55，每5分钟一档 — 三段循环
 const minutesList = [0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55]
+const minutesListExt = [...minutesList, ...minutesList, ...minutesList]
+const MINUTES_N = 12
+const MINUTES_MID = MINUTES_N // 中间段起始索引
 
 function openBodyForm() {
   formWeight.value = goalStore.currentWeight ?? 70
@@ -49,8 +56,8 @@ function openBodyForm() {
   formSoreness.value = 2
   showBodyForm.value = true
   nextTick(() => {
-    scrollPickerTo(hoursPicker.value, formSleepHours.value - 1)
-    scrollPickerTo(minutesPicker.value, formSleepMinutes.value / 5)
+    scrollPickerTo(hoursPicker.value, HOURS_MID + formSleepHours.value - 1)
+    scrollPickerTo(minutesPicker.value, MINUTES_MID + formSleepMinutes.value / 5)
   })
 }
 
@@ -63,13 +70,25 @@ function scrollPickerTo(el: HTMLElement | null, index: number) {
 function onHoursScrollEnd() {
   if (!hoursPicker.value) return
   const idx = Math.round(hoursPicker.value.scrollTop / 48)
-  formSleepHours.value = Math.max(1, Math.min(16, idx + 1))
+  const realIdx = ((idx % HOURS_N) + HOURS_N) % HOURS_N
+  formSleepHours.value = realIdx + 1
+  // 跳回中间段，实现无缝循环
+  const targetIdx = HOURS_MID + realIdx
+  if (idx !== targetIdx) {
+    hoursPicker.value.scrollTop = targetIdx * 48
+  }
 }
 
 function onMinutesScrollEnd() {
   if (!minutesPicker.value) return
   const idx = Math.round(minutesPicker.value.scrollTop / 48)
-  formSleepMinutes.value = Math.min(55, Math.max(0, idx * 5))
+  const realIdx = ((idx % MINUTES_N) + MINUTES_N) % MINUTES_N
+  formSleepMinutes.value = realIdx * 5
+  // 跳回中间段，实现无缝循环
+  const targetIdx = MINUTES_MID + realIdx
+  if (idx !== targetIdx) {
+    minutesPicker.value.scrollTop = targetIdx * 48
+  }
 }
 
 const totalSleepHours = () => {
@@ -423,10 +442,10 @@ const bmiRanges = [
                 <div class="picker-col" ref="hoursPicker" @scrollend.passive="onHoursScrollEnd">
                   <div class="picker-col-inner">
                     <div
-                      v-for="h in hoursList" :key="h"
+                      v-for="(h, hi) in hoursListExt" :key="hi"
                       class="picker-item"
                       :class="{ 'picker-item-active': h === formSleepHours }"
-                      @click="formSleepHours = h; scrollPickerTo(hoursPicker as any, h - 1)"
+                      @click="formSleepHours = h; scrollPickerTo(hoursPicker as any, HOURS_MID + h - 1)"
                     >{{ h }} 时</div>
                   </div>
                 </div>
@@ -434,10 +453,10 @@ const bmiRanges = [
                 <div class="picker-col" ref="minutesPicker" @scrollend.passive="onMinutesScrollEnd">
                   <div class="picker-col-inner">
                     <div
-                      v-for="m in minutesList" :key="m"
+                      v-for="(m, mi) in minutesListExt" :key="mi"
                       class="picker-item"
                       :class="{ 'picker-item-active': m === formSleepMinutes }"
-                      @click="formSleepMinutes = m; scrollPickerTo(minutesPicker as any, m / 5)"
+                      @click="formSleepMinutes = m; scrollPickerTo(minutesPicker as any, MINUTES_MID + m / 5)"
                     >{{ String(m).padStart(2, '0') }} 分</div>
                   </div>
                 </div>
