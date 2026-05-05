@@ -1,18 +1,23 @@
 <script setup lang="ts">
-import { onMounted, computed, ref, reactive } from 'vue'
+import { onMounted, computed, ref, reactive, watch } from 'vue'
 import { usePlan } from './usePlan'
 import { getTypeIcon, getTypeLabel, weekdayLabels } from '../shared/icons'
 import { getAdjustOptions, CARDIO_ACTIONS } from './planEngine'
-import type { DayPlan, CardioRecord } from './storage'
+import type { DayPlan, CardioRecord, ExerciseItem } from './storage'
 
 const store = usePlan()
 
-onMounted(() => { store.ensurePlan() })
+onMounted(() => {
+  store.ensurePlan()
+  // 自动展开今天的卡片
+  const today = new Date().toISOString().slice(0, 10)
+  expandedDates.value.add(today)
+})
 
 const weekInfo = computed(() => store.weekInfo)
 const weekLabel = computed(() => weekInfo.value?.label ?? '')
 
-/** 展开中的日期集合（点击中间区域切换） */
+/** 展开中的日期集合 */
 const expandedDates = ref(new Set<string>())
 
 function toggleExpand(date: string) {
@@ -26,7 +31,7 @@ function isExpanded(date: string): boolean {
   return expandedDates.value.has(date)
 }
 
-/** 有氧完成弹窗的本地表单数据 */
+/** 有氧完成弹窗表单 */
 const cardioForm = reactive({
   durationMinutes: 30,
   avgHeartRate: undefined as number | undefined,
@@ -37,7 +42,7 @@ function openCardioModal(date: string) {
   cardioForm.durationMinutes = 30
   cardioForm.avgHeartRate = undefined
   cardioForm.action = '慢跑'
-  store.markCompleted(date) // 触发打开弹窗
+  store.markCompleted(date)
 }
 
 function submitCardio() {
@@ -48,6 +53,30 @@ function submitCardio() {
     action: cardioForm.action
   }
   store.saveCardioRecord(store.cardioModalDate, record)
+}
+
+/** 力量完成弹窗：本地拷贝 exercises 供编辑 */
+const strengthEdit = ref<ExerciseItem[]>([])
+
+function openStrengthModal(date: string) {
+  const day = store.plan.find(p => p.date === date)
+  strengthEdit.value = (day?.exercises ?? []).map(e => ({ ...e }))
+  store.markCompleted(date)
+}
+
+function toggleStrengthExercise(index: number) {
+  const exs = [...strengthEdit.value]
+  exs[index] = { ...exs[index], completed: !exs[index].completed }
+  strengthEdit.value = exs
+}
+
+function allDone() {
+  strengthEdit.value = strengthEdit.value.map(e => ({ ...e, completed: true }))
+}
+
+function submitStrength() {
+  if (!store.strengthModalDate) return
+  store.saveStrengthCompletion(store.strengthModalDate, strengthEdit.value)
 }
 
 function isToday(date: string): boolean {
@@ -64,22 +93,13 @@ function getAdjustOptionsForDate(plan: DayPlan[], date: string) {
   return getAdjustOptions(plan, date)
 }
 
-/** 检查动作是否被忽视 */
 function isNeglected(name: string): boolean {
   return store.neglectedExercises.has(name)
 }
 
-/** 计算当天力量训练完成进度 */
 function completionPct(day: DayPlan): number {
   if (!day.exercises || day.exercises.length === 0) return 0
   return Math.round((day.exercises.filter(e => e.completed).length / day.exercises.length) * 100)
-}
-
-/** 所有动作完成才算这一天完成 */
-function areAllExercisesDone(day: DayPlan): boolean {
-  if (day.type === 'rest') return true
-  if (!day.exercises || day.exercises.length === 0) return true
-  return day.exercises.every(e => e.completed)
 }
 </script>
 
@@ -118,11 +138,17 @@ function areAllExercisesDone(day: DayPlan): boolean {
           <span :class="['badge', getBadgeClass(day.type)]">{{ getTypeLabel(day.type) }}</span>
         </div>
 
-        <!-- 摘要：可点击展开 -->
-        <div class="day-detail" v-if="day.details"
-          @click="day.type !== 'rest' && toggleExpand(day.date)">
-          <span>{{ day.details }}</span>
-          <span v-if="day.type !== 'rest'" class="expand-hint">{{ isExpanded(day.date) ? '收起 ▲' : '展开 ▼' }}</span>
+        <!-- 摘要 + 展开指示器（足够的点击区域） -->
+        <div class="day-detail-area" v-if="day.type !== 'rest'"
+          @click="toggleExpand(day.date)">
+          <div class="day-detail-text">
+            <span class="detail-icon">📋</span>
+            <span v-if="day.type === 'strength' && day.exercises.length > 0">
+              {{ completionPct(day) > 0 ? `${completionPct(day)}% 已完成` : `${day.exercises.length} 个动作` }}
+            </span>
+            <span v-else-if="day.type === 'cardio'">{{ day.details }}</span>
+          </div>
+          <span :class="['expand-chevron', { 'chevron-open': isExpanded(day.date) }]">▸</span>
         </div>
 
         <!-- 有氧记录概要（已完成且有 cardioRecord） -->
@@ -132,9 +158,9 @@ function areAllExercisesDone(day: DayPlan): boolean {
           <span class="cardio-stat" v-if="day.cardioRecord.action">{{ day.cardioRecord.action }}</span>
         </div>
 
-        <!-- 力量训练：动作清单（展开时显示） -->
+        <!-- 已展开：动作清单 -->
         <div class="exercise-list" v-if="isExpanded(day.date) && day.exercises && day.exercises.length > 0">
-          <div class="exercise-progress">
+          <div class="exercise-progress" v-if="day.type === 'strength'">
             <div class="progress-bar-mini">
               <div class="progress-fill-mini" :style="{ width: completionPct(day) + '%' }"></div>
             </div>
@@ -147,33 +173,20 @@ function areAllExercisesDone(day: DayPlan): boolean {
               'exercise-done': ex.completed,
               'exercise-neglected': !ex.completed && isNeglected(ex.name) && !day.completed
             }]"
-            @click.stop="store.toggleExercise(day.date, ei)"
           >
             <span :class="['ex-check', ex.completed ? 'ex-checked' : '']">
               {{ ex.completed ? '✅' : '○' }}
             </span>
             <span class="ex-name">{{ ex.name }}</span>
             <span class="ex-prescription">{{ ex.prescription }}</span>
-            <span v-if="!ex.completed && isNeglected(ex.name) && !day.completed" class="ex-warn">⚠️ 上周未做</span>
-          </div>
-        </div>
-
-        <!-- 有氧训练：动作清单（展开时显示） -->
-        <div class="exercise-list" v-if="isExpanded(day.date) && day.type === 'cardio' && day.exercises && day.exercises.length > 0 && !day.completed">
-          <div
-            v-for="(ex, ei) in day.exercises"
-            :key="ei"
-            :class="['exercise-item exercise-item-info']"
-          >
-            <span class="ex-name">{{ ex.name }}</span>
-            <span class="ex-prescription">{{ ex.prescription }}</span>
+            <span v-if="!ex.completed && isNeglected(ex.name) && !day.completed" class="ex-warn">⚠️</span>
           </div>
         </div>
 
         <!-- 底部操作栏 -->
         <div class="day-foot" v-if="day.type !== 'rest' && !day.completed && !day.missed">
-          <button class="btn btn-primary btn-sm" @click="day.type === 'cardio' ? openCardioModal(day.date) : store.markCompleted(day.date)">
-            {{ day.type === 'cardio' ? '完成（记录详情）' : '完成' }}
+          <button class="btn btn-primary btn-sm" @click="day.type === 'cardio' ? openCardioModal(day.date) : openStrengthModal(day.date)">
+            {{ day.type === 'cardio' ? '完成' : '完成' }}
           </button>
           <button class="btn btn-ghost btn-sm" @click="store.skipDay(day.date)">跳过</button>
         </div>
@@ -215,9 +228,8 @@ function areAllExercisesDone(day: DayPlan): boolean {
       <div class="modal-overlay" v-if="store.showCardioModal" @click.self="store.cancelCardioModal">
         <div class="modal-content">
           <h3>🏃 记录有氧训练</h3>
-          <p class="modal-desc">完成 {{ store.cardioModalDate }} 的有氧训练，记录你的表现</p>
+          <p class="modal-desc">{{ store.cardioModalDate }}</p>
 
-          <!-- 运动类型 -->
           <div class="form-group">
             <label class="label">运动类型</label>
             <div class="cardio-action-grid">
@@ -230,7 +242,6 @@ function areAllExercisesDone(day: DayPlan): boolean {
             </div>
           </div>
 
-          <!-- 运动时长 -->
           <div class="form-group">
             <label class="label">运动时长</label>
             <div class="stepper-row">
@@ -242,10 +253,11 @@ function areAllExercisesDone(day: DayPlan): boolean {
               <button v-for="d in [20, 30, 40, 60, 90]" :key="d"
                 :class="['chip chip-sm', { 'chip-active': cardioForm.durationMinutes === d }]"
                 @click="cardioForm.durationMinutes = d">{{ d }}分钟</button>
+              <button class="chip chip-sm"
+                @click="cardioForm.durationMinutes = day?.details?.includes('长有氧') ? 65 : 38">计划量</button>
             </div>
           </div>
 
-          <!-- 平均心率 -->
           <div class="form-group">
             <label class="label">平均心率 <span class="label-optional">（可选）</span></label>
             <div class="stepper-row">
@@ -258,6 +270,40 @@ function areAllExercisesDone(day: DayPlan): boolean {
           <div class="form-actions">
             <button class="btn btn-ghost" @click="store.cancelCardioModal">取消</button>
             <button class="btn btn-primary" @click="submitCardio">保存并完成</button>
+          </div>
+        </div>
+      </div>
+    </Teleport>
+
+    <!-- 力量完成弹窗 -->
+    <Teleport to="body">
+      <div class="modal-overlay" v-if="store.showStrengthModal" @click.self="store.cancelStrengthModal">
+        <div class="modal-content">
+          <h3>💪 完成力量训练</h3>
+          <p class="modal-desc">{{ store.strengthModalDate }}</p>
+          <div class="str-quick-row">
+            <button class="chip chip-sm" @click="allDone">全部完成</button>
+          </div>
+          <div
+            v-for="(ex, ei) in strengthEdit"
+            :key="ei"
+            :class="['exercise-item', 'exercise-item-modal', {
+              'exercise-done': ex.completed,
+              'exercise-neglected': !ex.completed && isNeglected(ex.name)
+            }]"
+            @click="toggleStrengthExercise(ei)"
+          >
+            <span :class="['ex-check', ex.completed ? 'ex-checked' : '']">
+              {{ ex.completed ? '✅' : '○' }}
+            </span>
+            <span class="ex-name">{{ ex.name }}</span>
+            <span class="ex-prescription">{{ ex.prescription }}</span>
+            <span v-if="!ex.completed && isNeglected(ex.name)" class="ex-warn">⚠️ 上周未做</span>
+          </div>
+
+          <div class="form-actions">
+            <button class="btn btn-ghost" @click="store.cancelStrengthModal">取消</button>
+            <button class="btn btn-primary" @click="submitStrength">保存并完成</button>
           </div>
         </div>
       </div>
@@ -292,9 +338,25 @@ function areAllExercisesDone(day: DayPlan): boolean {
 .today-tag { background: var(--color-primary); color: #fff; padding: 2px 8px; border-radius: 10px;
   font-size: 10px; font-weight: 600; animation: bounceIn 0.4s var(--ease-bounce); }
 
-.day-detail { font-size: 12px; color: var(--color-text-secondary); margin-bottom: 8px; line-height: 1.5;
-  cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
-.expand-hint { font-size: 10px; color: var(--color-primary); white-space: nowrap; margin-left: 8px; opacity: 0.7; }
+/* 展开控制区 —— 大点击区域 */
+.day-detail-area {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 12px; margin: 4px -8px 2px;
+  border-radius: 10px; cursor: pointer;
+  background: var(--color-bg);
+  transition: all var(--duration-fast) var(--ease-out);
+  user-select: none;
+}
+.day-detail-area:active { background: var(--color-surface-hover); transform: scale(0.985); }
+.day-detail-text { display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 550; color: var(--color-text); }
+.detail-icon { font-size: 15px; }
+
+.expand-chevron {
+  font-size: 14px; color: var(--color-text-tertiary);
+  transition: transform var(--duration-fast) var(--ease-out);
+  display: inline-block;
+}
+.chevron-open { transform: rotate(90deg); color: var(--color-primary); }
 
 /* 有氧记录概要 */
 .day-cardio-summary { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
@@ -302,20 +364,20 @@ function areAllExercisesDone(day: DayPlan): boolean {
   padding: 3px 8px; border-radius: 8px; font-weight: 550; }
 
 /* 动作清单 */
-.exercise-list { margin-bottom: 8px; animation: fadeInUp 0.3s var(--ease-out); }
+.exercise-list { margin-bottom: 8px; animation: fadeInUp 0.25s var(--ease-out); }
 
 .exercise-progress { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
 .progress-bar-mini { flex: 1; height: 4px; background: var(--color-border-light); border-radius: 2px; overflow: hidden; }
 .progress-fill-mini { height: 100%; background: var(--color-primary); border-radius: 2px; transition: width var(--duration-fast) var(--ease-out); }
 .progress-label { font-size: 11px; font-weight: 600; color: var(--color-primary); min-width: 32px; text-align: right; }
 
-.exercise-item { display: flex; align-items: center; gap: 6px; padding: 6px 8px; border-radius: 8px;
-  cursor: pointer; transition: all var(--duration-fast) var(--ease-out);
+.exercise-item { display: flex; align-items: center; gap: 6px; padding: 7px 8px; border-radius: 8px;
+  transition: all var(--duration-fast) var(--ease-out);
   background: var(--color-bg); margin-bottom: 4px; }
-.exercise-item:active { transform: scale(0.98); background: var(--color-surface-hover); }
-.exercise-item-info { cursor: default; background: transparent !important; }
+.exercise-item-modal { cursor: pointer; }
+.exercise-item-modal:active { transform: scale(0.98); background: var(--color-surface-hover); }
 .exercise-done { opacity: 0.6; background: var(--color-primary-bg); }
-.exercise-neglected { background: rgba(255, 107, 53, 0.08); border: 1px solid rgba(255, 107, 53, 0.2); }
+.exercise-neglected { background: rgba(255, 107, 53, 0.1); border: 1px solid rgba(255, 107, 53, 0.25); }
 
 .ex-check { font-size: 16px; width: 22px; text-align: center; flex-shrink: 0;
   color: var(--color-text-tertiary); }
@@ -329,7 +391,10 @@ function areAllExercisesDone(day: DayPlan): boolean {
 .day-foot { display: flex; gap: 6px; align-items: center; }
 .done-badge { font-size: 12px; color: var(--color-primary); font-weight: 600; }
 
-/* 有氧完成弹窗 */
+/* 力量弹窗 */
+.str-quick-row { display: flex; gap: 6px; margin-bottom: 12px; }
+
+/* 有氧弹窗 */
 .form-group { margin-bottom: 20px; }
 .label-optional { font-weight: 400; color: var(--color-text-tertiary); font-size: 12px; }
 
@@ -350,7 +415,7 @@ function areAllExercisesDone(day: DayPlan): boolean {
 .duration-quick { display: flex; gap: 6px; justify-content: center; margin-top: 8px; }
 
 /* Modal */
-.modal-desc { color: var(--color-text-secondary); margin: 8px 0 16px; font-size: 14px; }
+.modal-desc { color: var(--color-text-secondary); margin: 4px 0 16px; font-size: 14px; }
 .adj-option { cursor: pointer; margin-bottom: 8px; border: 1px solid transparent; border-radius: var(--radius);
   transition: all var(--duration-fast) var(--ease-out); }
 .adj-option:active { transform: scale(0.98); border-color: var(--color-primary); background: var(--color-primary-bg); }

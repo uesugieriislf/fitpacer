@@ -15,6 +15,8 @@ export const usePlan = defineStore('plan', () => {
   const adjustDate = ref<string | null>(null)
   const showCardioModal = ref(false)
   const cardioModalDate = ref<string | null>(null)
+  const showStrengthModal = ref(false)
+  const strengthModalDate = ref<string | null>(null)
 
   // === 计算属性 ===
   const weekInfo = computed(() => getWeekInfo(plan.value, currentWeekMonday.value))
@@ -58,7 +60,14 @@ export const usePlan = defineStore('plan', () => {
       return
     }
 
-    // 力量日 / 休息日 / 撤销（已完成的任何类型）：直接切换
+    // 力量日：弹出动作清单弹窗
+    if (day.type === 'strength' && !day.completed) {
+      strengthModalDate.value = date
+      showStrengthModal.value = true
+      return
+    }
+
+    // 休息日 / 撤销（已完成的任何类型）：直接切换
     plan.value = plan.value.map(p =>
       p.date === date ? { ...p, completed: !p.completed, missed: false } : p
     )
@@ -92,6 +101,22 @@ export const usePlan = defineStore('plan', () => {
   function cancelCardioModal() {
     showCardioModal.value = false
     cardioModalDate.value = null
+  }
+
+  /** 保存力量训练完成情况并标记完成 */
+  function saveStrengthCompletion(date: string, exercises: typeof plan.value[0]['exercises']) {
+    plan.value = plan.value.map(p =>
+      p.date === date ? { ...p, exercises, completed: true, missed: false } : p
+    )
+    savePlan(plan.value)
+    showStrengthModal.value = false
+    strengthModalDate.value = null
+  }
+
+  /** 关闭力量完成弹窗（不标记完成） */
+  function cancelStrengthModal() {
+    showStrengthModal.value = false
+    strengthModalDate.value = null
   }
 
   // === 跳过/错过 ===
@@ -185,6 +210,8 @@ export const usePlan = defineStore('plan', () => {
     adjustDate,
     showCardioModal,
     cardioModalDate,
+    showStrengthModal,
+    strengthModalDate,
     // 计算
     weekInfo,
     hasPlan,
@@ -196,6 +223,8 @@ export const usePlan = defineStore('plan', () => {
     toggleExercise,
     saveCardioRecord,
     cancelCardioModal,
+    saveStrengthCompletion,
+    cancelStrengthModal,
     skipDay,
     applyAdjustOption,
     cancelAdjust,
