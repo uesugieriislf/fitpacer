@@ -123,8 +123,6 @@ function isToday(d: string): boolean {
       </div>
     </div>
 
-    <button v-if="!showForm" class="btn btn-primary add-btn" @click="openForm">+ 添加记录</button>
-
     <!-- 录入表单 -->
     <div v-if="showForm" class="form-panel card card-elevated">
       <h3>新训练记录</h3>
@@ -183,6 +181,9 @@ function isToday(d: string): boolean {
       </div>
     </div>
     </div>
+
+    <!-- 悬浮添加按钮 -->
+    <button v-if="!showForm" class="fab" @click="openForm">+</button>
   </div>
 </template>
 
@@ -208,7 +209,7 @@ function isToday(d: string): boolean {
 .plan-hint-detail { font-size: 12px; color: var(--color-text-secondary); font-weight: 400; margin-left: auto; }
 .plan-hint-rest { background: rgba(148, 163, 184, 0.08); color: var(--color-rest); }
 
-.records-list { display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; }
+.records-list { display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; padding-bottom: 80px; }
 
 .record-card { padding: 16px; transition: all var(--duration-fast) var(--ease-out); }
 .record-card:active { transform: scale(0.99); box-shadow: var(--shadow-xs); }
@@ -219,7 +220,18 @@ function isToday(d: string): boolean {
 .rec-rpe { color: var(--color-primary); font-weight: 600; }
 .rec-note { margin-top: 6px; font-size: 13px; color: var(--color-text-secondary); font-style: italic; }
 
-.add-btn { width: 100%; padding: 16px; font-size: 16px; border-radius: var(--radius); }
+/* 悬浮添加按钮 */
+.fab {
+  position: fixed; bottom: calc(var(--safe-bottom) + 80px); right: 20px; z-index: 20;
+  width: 56px; height: 56px; border-radius: 50%;
+  background: var(--color-primary-gradient); color: #fff;
+  font-size: 28px; font-weight: 400; line-height: 56px; text-align: center;
+  border: none; cursor: pointer;
+  box-shadow: 0 4px 20px rgba(0, 179, 101, 0.4);
+  transition: all var(--duration-fast) var(--ease-out);
+  animation: scaleInBounce 0.35s var(--ease-bounce);
+}
+.fab:active { transform: scale(0.9); box-shadow: 0 2px 12px rgba(0, 179, 101, 0.3); }
 
 .form-panel { margin-top: 20px; padding: 22px; animation: slideUp 0.35s var(--ease-out); }
 .form-panel h3 { font-size: 18px; font-weight: 700; margin-bottom: 20px; }

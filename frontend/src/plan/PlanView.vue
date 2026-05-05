@@ -354,11 +354,12 @@ const cardioDiff = computed(() => {
 .week-arrow { font-size: 20px; font-weight: 400; color: var(--color-text); padding: 4px 12px; }
 .week-label { font-size: 14px; font-weight: 650; min-width: 140px; text-align: center; color: var(--color-text); }
 
-/* 有氧进度条 */
+/* 有氧进度条 — sticky 固定 */
 .cardio-progress {
-  margin: 4px 0 8px; padding: 12px 14px;
+  position: sticky; top: -1px; z-index: 5;
+  margin: 0 0 8px; padding: 12px 14px;
   background: var(--color-surface); border-radius: var(--radius-sm);
-  box-shadow: var(--shadow-xs);
+  box-shadow: var(--shadow-sm);
 }
 .cardio-progress-text { display: flex; justify-content: space-between; align-items: baseline;
   font-size: 13px; font-weight: 550; margin-bottom: 8px; }
