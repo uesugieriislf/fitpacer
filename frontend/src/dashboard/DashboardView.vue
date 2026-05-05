@@ -73,7 +73,7 @@ function onMinutesScrollEnd() {
 }
 
 const totalSleepHours = () => {
-  return parseFloat((formSleepHours.value + formSleepMinutes.value / 60).toFixed(1))
+  return parseFloat((formSleepHours.value + formSleepMinutes.value / 60).toFixed(2))
 }
 
 function submitBodyData() {
