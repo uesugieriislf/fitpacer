@@ -60,24 +60,25 @@ function isToday(d: string): boolean {
 </script>
 
 <template>
-  <div class="record-view">
+  <div class="record-view view">
     <h1 class="record-title">📝 训练记录</h1>
 
     <!-- 日期导航 -->
     <div class="date-nav">
-      <button class="btn btn-sm" @click="changeDate(-1)">◀</button>
+      <button class="btn btn-sm nav-arrow" @click="changeDate(-1)">◀</button>
       <div class="date-display">
         <span class="date-main">{{ dateObj.getMonth() + 1 }}/{{ dateObj.getDate() }}</span>
         <span class="date-weekday">周{{ weekdayLabels[dateObj.getDay()] }}</span>
-        <span v-if="isToday(dateStr)" class="date-today">今天</span>
+        <span v-if="isToday(dateStr)" class="date-today-badge">今天</span>
       </div>
-      <button class="btn btn-sm" @click="changeDate(1)">▶</button>
+      <button class="btn btn-sm nav-arrow" @click="changeDate(1)">▶</button>
     </div>
 
     <!-- 当日记录列表 -->
-    <div class="records-list">
-      <div v-if="store.todayRecords.length === 0" class="empty-hint">
-        暂无记录，点击下方按钮添加
+    <div class="records-list card-stagger">
+      <div v-if="store.todayRecords.length === 0" class="empty-state">
+        <span class="empty-icon">📝</span>
+        <p>暂无记录，点击下方按钮添加</p>
       </div>
 
       <div
@@ -87,15 +88,15 @@ function isToday(d: string): boolean {
       >
         <div class="record-top">
           <span class="record-action">{{ rec.action }}</span>
-          <button class="btn btn-sm" @click="store.removeRecord(rec.id)" style="color:#F44336">
+          <button class="btn btn-sm record-delete-btn" @click="store.removeRecord(rec.id)">
             🗑️
           </button>
         </div>
         <div class="record-stats">
-          <span>{{ rec.sets }} 组 × {{ rec.reps }} 次</span>
-          <span class="record-rpe">RPE {{ rec.rpe }} — {{ rpeLabels[rec.rpe] ?? '' }}</span>
+          <span>💪 {{ rec.sets }} 组 × {{ rec.reps }} 次</span>
+          <span class="record-rpe">🎯 RPE {{ rec.rpe }} — {{ rpeLabels[rec.rpe] ?? '' }}</span>
         </div>
-        <div class="record-note" v-if="rec.note">{{ rec.note }}</div>
+        <div class="record-note" v-if="rec.note">💬 {{ rec.note }}</div>
       </div>
     </div>
 
@@ -132,19 +133,19 @@ function isToday(d: string): boolean {
               @click="formAction = ex"
             >{{ ex }}</button>
           </div>
-          <button class="btn btn-sm" style="margin-top:8px" @click="useCustom = true">
+          <button class="btn btn-sm chip-toggle-btn" @click="useCustom = true">
             ✏️ 自定义动作
           </button>
         </div>
 
         <!-- 自定义动作 -->
-        <div v-else>
+        <div v-else class="custom-action-area">
           <input
             v-model="customAction"
             class="text-input"
             placeholder="输入动作名称..."
           />
-          <button class="btn btn-sm" style="margin-top:4px" @click="useCustom = false">
+          <button class="btn btn-sm chip-toggle-btn" @click="useCustom = false">
             ↩️ 使用预设
           </button>
         </div>
@@ -228,6 +229,14 @@ function isToday(d: string): boolean {
   margin-bottom: 20px;
 }
 
+.nav-arrow {
+  transition: transform var(--duration-fast) var(--ease-out);
+}
+
+.nav-arrow:active {
+  transform: scale(0.9);
+}
+
 .date-display {
   display: flex;
   align-items: center;
@@ -246,13 +255,15 @@ function isToday(d: string): boolean {
   color: var(--color-text-secondary);
 }
 
-.date-today {
-  background: var(--color-primary);
+.date-today-badge {
+  background: var(--color-primary-gradient);
   color: white;
   padding: 1px 8px;
   border-radius: 10px;
   font-size: 11px;
   font-weight: 600;
+  animation: bounceIn 0.4s var(--ease-bounce);
+  box-shadow: 0 1px 4px rgba(46, 125, 81, 0.3);
 }
 
 .records-list {
@@ -262,13 +273,13 @@ function isToday(d: string): boolean {
   margin-bottom: 16px;
 }
 
-.empty-hint {
-  text-align: center;
-  color: var(--color-text-secondary);
-  padding: 24px 0;
+.record-card {
+  transition: all var(--duration) var(--ease-out);
 }
 
-.record-card {
+.record-card:active {
+  transform: scale(0.99);
+  box-shadow: var(--shadow-sm);
 }
 
 .record-top {
@@ -281,6 +292,16 @@ function isToday(d: string): boolean {
 .record-action {
   font-size: 16px;
   font-weight: 600;
+}
+
+.record-delete-btn {
+  color: var(--color-danger);
+  opacity: 0.4;
+  transition: opacity var(--duration-fast) var(--ease-out);
+}
+
+.record-delete-btn:active {
+  opacity: 1;
 }
 
 .record-stats {
@@ -305,11 +326,17 @@ function isToday(d: string): boolean {
 .add-btn {
   width: 100%;
   padding: 14px;
+  transition: all var(--duration-fast) var(--ease-out);
+}
+
+.add-btn:active {
+  transform: scale(0.97);
 }
 
 /* Form */
 .form-panel {
   margin-top: 16px;
+  animation: slideUp 0.3s var(--ease-out);
 }
 
 .form-panel h3 {
@@ -356,14 +383,31 @@ function isToday(d: string): boolean {
   background: var(--color-bg);
   font-size: 13px;
   cursor: pointer;
-  transition: all 0.15s;
+  transition: all var(--duration-fast) var(--ease-out);
   -webkit-tap-highlight-color: transparent;
+}
+
+.chip:active {
+  transform: scale(0.95);
 }
 
 .chip-active {
   background: var(--color-primary);
   color: white;
   border-color: var(--color-primary);
+}
+
+.chip-toggle-btn {
+  margin-top: 4px;
+  color: var(--color-primary);
+  background: var(--color-primary-bg);
+  border: none;
+}
+
+.custom-action-area {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
 }
 
 .text-input {
@@ -412,5 +456,24 @@ function isToday(d: string): boolean {
   justify-content: flex-end;
   gap: 8px;
   margin-top: 8px;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 40px 20px;
+  color: var(--color-text-secondary);
+  animation: fadeIn var(--duration) var(--ease-out);
+}
+
+.empty-state .empty-icon {
+  font-size: 48px;
+  margin-bottom: 12px;
+  display: block;
+  animation: float 3s ease-in-out infinite;
+}
+
+.empty-state p {
+  margin-bottom: 16px;
+  font-size: 15px;
 }
 </style>

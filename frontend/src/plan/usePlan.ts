@@ -22,7 +22,7 @@ export const usePlan = defineStore('plan', () => {
   // === 初始化计划 ===
   function initPlan(startDate?: string) {
     const config = loadConfig()
-    const trainingDays = config?.trainingDays ?? [1, 2, 3, 4, 5, 6] // 默认周一至周六
+    const trainingDays = config?.trainingDays ?? [0, 1, 2, 4, 5] // 默认含周日（周日长有氧）
 
     const start = startDate ?? getCurrentWeekMonday()
     const planConfig: PlanConfig = { startDate: start, trainingDays }
@@ -122,7 +122,7 @@ export const usePlan = defineStore('plan', () => {
     const existing = loadConfig()
     const base = existing ?? {
       startDate: getCurrentWeekMonday(),
-      trainingDays: [1, 2, 3, 4, 5, 6]
+      trainingDays: [0, 1, 2, 4, 5]
     }
     const merged: PlanConfig = { ...base, ...config }
     plan.value = generatePlan(merged)

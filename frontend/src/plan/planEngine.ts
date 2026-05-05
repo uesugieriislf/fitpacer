@@ -48,10 +48,10 @@ function daysBetween(a: string, b: string): number {
 }
 
 // === 计划生成 ===
-
+// 规则：同类型训练不连续安排，中间至少隔一天休息
 const STRENGTH_DAYS = [1, 4] // 周一、周四
-const CARDIO_DAYS = [3, 6]   // 周三、周六
-const LONG_CARDIO_DAY = 6    // 周六 = 长有氧
+const CARDIO_DAYS = [2, 5, 0] // 周二、周五、周日（3次有氧，不连续）
+const LONG_CARDIO_DAY = 0    // 周日 = 长有氧
 
 const STRENGTH_EXERCISES = [
   '引体向上 3×8-12',
@@ -65,7 +65,8 @@ function getStrengthDetails(): string {
 }
 
 function getCardioDetails(isLong: boolean): string {
-  return isLong ? '长有氧 50-60 分钟' : '有氧 30-40 分钟'
+  // 周二 40min + 周五 40min + 周日长有氧 70min = 150min/周（符合 WHO 推荐）
+  return isLong ? '长有氧 60-70 分钟' : '有氧 35-40 分钟'
 }
 
 function getTrainingType(dayOfWeek: number, trainingDays: number[]): TrainingType {
@@ -146,7 +147,7 @@ export function getAdjustOptions(plan: DayPlan[], missedDate: string): AdjustOpt
   return options
 }
 
-/** 重新对齐：插入补练并顺延后续力量日 */
+/** 重新对齐：插入补练并顺延后续力量日，保持非连续原则 */
 function realignStrength(plan: DayPlan[], missedDate: string): DayPlan[] {
   const newPlan = plan.map(p => ({ ...p }))
 
@@ -166,17 +167,15 @@ function realignStrength(plan: DayPlan[], missedDate: string): DayPlan[] {
 
   if (strengthIndices.length === 0) return newPlan
 
-  // 将第一个后续力量日变为补练日（休息 + 力量动作）
+  // 将第一个后续力量日变为补练日
   const firstStrengthIdx = strengthIndices[0]
-  const firstStrengthDate = newPlan[firstStrengthIdx].date
   newPlan[firstStrengthIdx] = {
     ...newPlan[firstStrengthIdx],
     details: '⚠️ 补练：' + getStrengthDetails()
   }
 
-  // 顺延后续力量日：每个力量日向后推到下一个 rest 日
+  // 顺延后续力量日：每个力量日向后推到下一个 rest 日（至少隔一天）
   for (let si = 1; si < strengthIndices.length; si++) {
-    const current = strengthIndices[si]
     const prevDate = strengthIndices[si - 1]
     const prevNewDate = newPlan[prevDate].date
 
@@ -184,7 +183,6 @@ function realignStrength(plan: DayPlan[], missedDate: string): DayPlan[] {
     let targetDate = addDays(parseDate(prevNewDate), 3)
     let targetIdx = newPlan.findIndex(p => p.date === formatDate(targetDate))
 
-    // 如果目标日不存在（超出计划范围）或已被占用，往后找
     while (targetIdx >= 0 && targetIdx < newPlan.length) {
       if (newPlan[targetIdx].type === 'rest') break
       targetDate = addDays(targetDate, 1)
@@ -192,7 +190,6 @@ function realignStrength(plan: DayPlan[], missedDate: string): DayPlan[] {
     }
 
     if (targetIdx >= 0 && targetIdx < newPlan.length) {
-      // 将原来这个力量日的内容（除补练标记）移到新位置
       const orig = newPlan[strengthIndices[si]]
       newPlan[targetIdx] = {
         date: newPlan[targetIdx].date,
@@ -201,7 +198,6 @@ function realignStrength(plan: DayPlan[], missedDate: string): DayPlan[] {
         missed: false,
         details: getStrengthDetails()
       }
-      // 原来的位置变为休息
       newPlan[strengthIndices[si]] = {
         date: orig.date,
         type: 'rest',

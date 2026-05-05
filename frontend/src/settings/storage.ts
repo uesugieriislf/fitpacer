@@ -8,7 +8,7 @@ export interface Settings {
 const SETTINGS_KEY = 'fitpacer_settings'
 
 const DEFAULT_SETTINGS: Settings = {
-  trainingDays: [1, 2, 3, 4, 5, 6], // 周一至周六
+  trainingDays: [0, 1, 2, 4, 5], // 含周日
   sleepReminderTime: '22:00'
 }
 

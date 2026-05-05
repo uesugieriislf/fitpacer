@@ -5,8 +5,9 @@ export interface BodyData {
   date: string        // 'YYYY-MM-DD'
   weight: number      // kg
   waist: number       // cm
-  sleepQuality: number // 1-5
-  soreness: number    // 1-5
+  sleepHours: number  // 睡眠时长（小时）
+  sleepQuality: number // 睡眠质量 1-5
+  soreness: number    // 肌肉酸痛度 1-5
 }
 
 const BODY_DATA_KEY = 'fitpacer_body_data'

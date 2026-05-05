@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, computed } from 'vue'
+import { onMounted, computed, ref } from 'vue'
 import { usePlan } from './usePlan'
 import { getTypeIcon, getTypeLabel, weekdayLabels } from '../shared/icons'
 import { getAdjustOptions } from './planEngine'
@@ -31,7 +31,7 @@ function getAdjustOptionsForDate(plan: DayPlan[], date: string) {
 </script>
 
 <template>
-  <div class="plan-view">
+  <div class="plan-view view">
     <!-- 顶部操作栏 -->
     <div class="plan-header">
       <h1 class="plan-title">📅 训练计划</h1>
@@ -47,17 +47,17 @@ function getAdjustOptionsForDate(plan: DayPlan[], date: string) {
 
     <!-- 周导航 -->
     <div class="week-nav">
-      <button class="btn btn-sm" @click="store.goToWeek(-1)">◀</button>
+      <button class="btn btn-sm nav-arrow" @click="store.goToWeek(-1)">◀</button>
       <span class="week-label">{{ weekLabel }}</span>
-      <button class="btn btn-sm" @click="store.goToWeek(1)">▶</button>
+      <button class="btn btn-sm nav-arrow" @click="store.goToWeek(1)">▶</button>
     </div>
 
     <!-- 周日历 -->
-    <div class="week-calendar" v-if="weekInfo">
+    <div class="week-calendar card-stagger" v-if="weekInfo">
       <div
         v-for="day in weekInfo.days"
         :key="day.date"
-        class="day-card"
+        class="day-card card"
         :class="{
           'day-today': isToday(day.date),
           'day-completed': day.completed,
@@ -75,7 +75,7 @@ function getAdjustOptionsForDate(plan: DayPlan[], date: string) {
         </div>
 
         <div class="day-type">
-          <span :class="getBadgeClass(day.type)">{{ getTypeLabel(day.type) }}</span>
+          <span :class="['badge', getBadgeClass(day.type)]">{{ getTypeLabel(day.type) }}</span>
           <span v-if="day.completed" class="day-status">✅</span>
           <span v-if="day.missed" class="day-status">⏭️</span>
         </div>
@@ -85,16 +85,16 @@ function getAdjustOptionsForDate(plan: DayPlan[], date: string) {
         </div>
 
         <div class="day-actions" v-if="day.type !== 'rest' && !day.completed && !day.missed">
-          <button class="btn btn-primary btn-sm" @click="store.markCompleted(day.date)">
+          <button class="btn btn-primary btn-sm day-action-btn" @click="store.markCompleted(day.date)">
             ✅ 完成
           </button>
-          <button class="btn btn-sm" @click="store.skipDay(day.date)" style="background:#eee; color:#666">
+          <button class="btn btn-sm day-action-btn day-skip-btn" @click="store.skipDay(day.date)">
             ⏭️ 跳过
           </button>
         </div>
 
         <div class="day-actions" v-if="day.completed">
-          <button class="btn btn-sm" @click="store.markCompleted(day.date)" style="background:#eee">
+          <button class="btn btn-sm day-action-btn" @click="store.markCompleted(day.date)">
             ↩️ 撤销
           </button>
         </div>
@@ -103,6 +103,7 @@ function getAdjustOptionsForDate(plan: DayPlan[], date: string) {
 
     <!-- 空状态 -->
     <div v-if="!store.hasPlan" class="empty-state">
+      <span class="empty-icon">📅</span>
       <p>还没有训练计划</p>
       <button class="btn btn-primary" @click="store.initPlan()">🎯 生成计划</button>
     </div>
@@ -170,6 +171,14 @@ function getAdjustOptionsForDate(plan: DayPlan[], date: string) {
   text-align: center;
 }
 
+.nav-arrow {
+  transition: transform var(--duration-fast) var(--ease-out), background var(--duration-fast) ease;
+}
+
+.nav-arrow:active {
+  transform: scale(0.9);
+}
+
 .week-calendar {
   display: flex;
   flex-direction: column;
@@ -177,12 +186,13 @@ function getAdjustOptionsForDate(plan: DayPlan[], date: string) {
 }
 
 .day-card {
-  background: var(--color-surface);
-  border-radius: var(--radius);
-  padding: 14px;
-  box-shadow: var(--shadow);
   border-left: 4px solid var(--color-border);
-  transition: opacity 0.2s;
+  transition: all var(--duration) var(--ease-out);
+}
+
+.day-card:active {
+  transform: scale(0.99);
+  box-shadow: var(--shadow-sm);
 }
 
 .day-card.day-strength {
@@ -194,7 +204,7 @@ function getAdjustOptionsForDate(plan: DayPlan[], date: string) {
 }
 
 .day-today {
-  box-shadow: 0 0 0 2px var(--color-primary);
+  box-shadow: 0 0 0 2px var(--color-primary), 0 2px 8px rgba(46, 125, 81, 0.15);
 }
 
 .day-completed {
@@ -221,12 +231,14 @@ function getAdjustOptionsForDate(plan: DayPlan[], date: string) {
 }
 
 .day-today-badge {
-  background: var(--color-primary);
+  background: var(--color-primary-gradient);
   color: white;
   padding: 1px 8px;
   border-radius: 10px;
   font-size: 11px;
   font-weight: 600;
+  animation: bounceIn 0.4s var(--ease-bounce);
+  box-shadow: 0 1px 4px rgba(46, 125, 81, 0.3);
 }
 
 .day-icon {
@@ -243,6 +255,7 @@ function getAdjustOptionsForDate(plan: DayPlan[], date: string) {
 
 .day-status {
   font-size: 16px;
+  animation: bounceIn 0.3s var(--ease-bounce);
 }
 
 .day-details {
@@ -255,6 +268,20 @@ function getAdjustOptionsForDate(plan: DayPlan[], date: string) {
 .day-actions {
   display: flex;
   gap: 8px;
+}
+
+.day-action-btn {
+  transition: all var(--duration-fast) var(--ease-out);
+}
+
+.day-action-btn:active {
+  transform: scale(0.93);
+}
+
+.day-skip-btn {
+  background: var(--color-bg);
+  color: var(--color-text-secondary);
+  border: 1px solid var(--color-border);
 }
 
 .empty-state {
@@ -294,11 +321,15 @@ function getAdjustOptionsForDate(plan: DayPlan[], date: string) {
 .adjust-option {
   cursor: pointer;
   margin-bottom: 8px;
-  transition: opacity 0.2s;
+  transition: all var(--duration-fast) var(--ease-out);
+  border: 1px solid transparent;
 }
 
 .adjust-option:active {
   opacity: 0.7;
+  transform: scale(0.98);
+  background: var(--color-primary-bg);
+  border-color: var(--color-primary);
 }
 
 .adjust-option p {

@@ -15,11 +15,19 @@
 
 ## 功能清单（按模块）
 
+### goal/ — 目标追踪 ✅ 新增
+
+| 文件 | 状态 | 说明 |
+|------|------|------|
+| `useGoal.ts` | ✅ 完成 | Pinia store：BMI 计算、减重进度百分比、剩余体重、目标达成检测 |
+| `storage.ts` | ✅ 完成 | GoalConfig 类型（身高/目标体重/起始体重）+ localStorage 读写 |
+
 ### plan/ — 训练计划 ✅ 已完成
 
 | 文件 | 状态 | 说明 |
 |------|------|------|
 | `planEngine.ts` | ✅ 完成 | 纯函数：generatePlan / getAdjustOptions / findNextSlot / 周工具 |
+| | ✅ 更新 | CARDIO_DAYS [3,6]→[2,5,6]，有氧 3 次/周达 150min |
 | `usePlan.ts` | ✅ 完成 | Pinia store：计划 CRUD、跳过调整、周导航、ICS 导出 |
 | `PlanView.vue` | ✅ 完成 | 周视图、完成/跳过/撤销、调整弹窗 |
 | `storage.ts` | ✅ 完成 | DayPlan / PlanConfig 类型 + localStorage 读写 |
@@ -38,15 +46,15 @@
 | 文件 | 状态 | 说明 |
 |------|------|------|
 | `useDashboard.ts` | ✅ 完成 | Pinia store：周报统计、身体数据 CRUD、Chart.js 数据格式 |
-| `DashboardView.vue` | ✅ 完成 | 周报卡片、体重/腰围趋势折线图、身体数据录入弹窗、历史列表 |
-| `storage.ts` | ✅ 完成 | BodyData 类型 + localStorage 读写 |
+| `DashboardView.vue` | ✅ 完成 | 周报卡片、🎯 目标进度卡片、BMI 显示、体重/腰围趋势折线图、身体数据录入弹窗（含睡眠时长）、历史列表 |
+| `storage.ts` | ✅ 完成 | BodyData 类型 + sleepHours 字段 + localStorage 读写 |
 
 ### settings/ — 设置 ✅ 已完成
 
 | 文件 | 状态 | 说明 |
 |------|------|------|
 | `useSettings.ts` | ✅ 完成 | Pinia store：训练日切换、睡眠时间、自动持久化 |
-| `SettingsView.vue` | ✅ 完成 | 训练日多选 toggle、睡眠时间选择、主题切换、应用设置并重生成计划 |
+| `SettingsView.vue` | ✅ 完成 | 🎯 减重目标设定（身高/起始体重/目标体重）、训练日多选 toggle、睡眠时间选择、主题切换、应用设置并重生成计划 |
 | `storage.ts` | ✅ 完成 | Settings 类型 + localStorage 读写 |
 
 ### shared/ — 跨功能复用
@@ -73,7 +81,7 @@
 
 | # | 需求 | 状态 | 备注 |
 |---|------|------|------|
-| 1 | 4 周训练计划生成（力量/有氧/休息） | ✅ | 力量周一四，有氧周三六，周六长有氧 |
+| 1 | 4 周训练计划生成（力量/有氧/休息） | ✅ | 力量周一四，有氧周二五+周六长有氧，共 150min/周 |
 | 2 | 计划跳过调整弹窗 | ✅ | 保持原计划 / 重新对齐（仅力量日） |
 | 3 | 周视图导航（上下周） | ✅ | PlanView goToWeek |
 | 4 | 标记完成 / 跳过 / 撤销 | ✅ | |
@@ -88,6 +96,10 @@
 | 13 | .ics 日历导出（含 VALARM 15min） | ✅ | 三种导出策略 |
 | 14 | PWA 离线支持 | ✅ | vite-plugin-pwa + Workbox |
 | 15 | 训练偏好扩展 | ⏳ 预留 | 当前固定混合模式，后续可扩展 |
+| 16 | 🎯 减重目标设定（身高/起始/目标体重） | ✅ | Settings 输入，Dashboard 显示进度 |
+| 17 | BMI 计算与分类 | ✅ | 看板顶部显示 BMI 值及偏瘦/正常/偏胖/肥胖判定 |
+| 18 | 进度条显示减重百分比 | ✅ | Dashboard 进度卡片 + 进度条 |
+| 19 | 睡眠时长记录 | ✅ | BodyData 增加 sleepHours 字段，表单 stepper 输入 |
 
 ## 已知问题 / 待办
 
@@ -101,3 +113,5 @@
 |------|------|------|
 | 2026-05-05 | 初始创建，所有功能已实现 | #1 |
 | 2026-05-05 | 创建 README.md、PROGRESS.md，完善 RULES.md（进度跟踪+经验教训内化） | #1 |
+| 2026-05-05 | 训练计划调整为 3 次有氧（周二/周五/周六），总时长 150min/周；新增 goal/ 模块（目标设定+BMI+进度条）；BodyData 增加 sleepHours；Settings 增加身高/目标体重设定；Dashboard 增加目标进度卡片 | #1 |
+| 2026-05-05 | **动画与样式大升级**：新增 16 个 CSS 动画关键帧（slideInLeft/Right, scaleInBounce, bounceIn, shimmer, float, ripple, overlayIn, listItemIn 等）；玻璃态模态框（backdrop-filter）；按钮涟漪动效；卡片按压缩放；标签切换左右滑入过渡；底部导航弹跳效果；仪表盘统计数字滚动动画（requestAnimationFrame）；图表渐入显示；睡眠步进器从 0.25h 精确至 0.1h（6 分钟），显示格式改为"X小时Y分钟" | #2 |
