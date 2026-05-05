@@ -1,5 +1,5 @@
 // plan/planEngine.test.ts — planEngine 纯函数测试
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect } from 'vite-plus/test'
 import {
   formatDate,
   parseDate,

@@ -4,13 +4,13 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
-    "build": "vite build",
-    "preview": "vite preview",
-    "deploy": "vite build && node scripts/deploy-ghpages.mjs",
-    "test": "vitest run",
-    "test:watch": "vitest",
-    "test:ui": "vitest --ui"
+    "dev": "vp dev",
+    "build": "vp build",
+    "preview": "vp preview",
+    "deploy": "vp build && node scripts/deploy-ghpages.mjs",
+    "test": "vp test",
+    "test:watch": "vp test",
+    "test:ui": "vp test --ui"
   },
   "dependencies": {
     "chart.js": "^4.4.0",
@@ -24,9 +24,10 @@
     "jsdom": "^29.1.1",
     "sharp": "^0.34.5",
     "typescript": "^5.4.0",
-    "vite": "^5.4.0",
+    "vite-plus": "latest",
     "vite-plugin-pwa": "^0.20.0",
-    "vitest": "^3.2.4",
+    "vite": "^6.0.0",
     "vue-tsc": "^2.0.0"
-  }
+  },
+  "packageManager": "pnpm@10.33.3"
 }
