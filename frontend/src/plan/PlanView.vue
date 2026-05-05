@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, computed, ref } from 'vue'
+import { onMounted, computed } from 'vue'
 import { usePlan } from './usePlan'
 import { getTypeIcon, getTypeLabel, weekdayLabels } from '../shared/icons'
 import { getAdjustOptions } from './planEngine'
@@ -7,9 +7,7 @@ import type { DayPlan } from './storage'
 
 const store = usePlan()
 
-onMounted(() => {
-  store.ensurePlan()
-})
+onMounted(() => { store.ensurePlan() })
 
 const weekInfo = computed(() => store.weekInfo)
 const weekLabel = computed(() => weekInfo.value?.label ?? '')
@@ -24,106 +22,73 @@ function getBadgeClass(type: string): string {
   return 'badge-rest'
 }
 
-/** 获取当前调整日期的可选方案 */
 function getAdjustOptionsForDate(plan: DayPlan[], date: string) {
   return getAdjustOptions(plan, date)
 }
 </script>
 
 <template>
-  <div class="plan-view view">
-    <!-- 顶部操作栏 -->
-    <div class="plan-header">
-      <h1 class="plan-title">📅 训练计划</h1>
-      <div class="plan-header-actions">
-        <button class="btn btn-primary btn-sm" @click="store.handleOpenInCalendar">
-          📅 添加到日历
-        </button>
-        <button class="btn btn-outline btn-sm" @click="store.handleExportICS">
-          📲 导出 ICS
-        </button>
+  <div class="view">
+    <div class="view-header">
+      <h1 class="view-title">训练计划</h1>
+      <div class="header-actions">
+        <button class="btn btn-outline btn-sm" @click="store.handleOpenInCalendar">添加到日历</button>
+        <button class="btn btn-primary btn-sm" @click="store.handleExportICS">导出</button>
       </div>
     </div>
 
-    <!-- 周导航 -->
     <div class="week-nav">
-      <button class="btn btn-sm nav-arrow" @click="store.goToWeek(-1)">◀</button>
+      <button class="btn btn-ghost week-arrow" @click="store.goToWeek(-1)">‹</button>
       <span class="week-label">{{ weekLabel }}</span>
-      <button class="btn btn-sm nav-arrow" @click="store.goToWeek(1)">▶</button>
+      <button class="btn btn-ghost week-arrow" @click="store.goToWeek(1)">›</button>
     </div>
 
-    <!-- 周日历 -->
-    <div class="week-calendar card-stagger" v-if="weekInfo">
-      <div
-        v-for="day in weekInfo.days"
-        :key="day.date"
-        class="day-card card"
-        :class="{
+    <div class="day-list card-stagger" v-if="weekInfo">
+      <div v-for="day in weekInfo.days" :key="day.date"
+        :class="['day-card card', `day-${day.type}`, {
           'day-today': isToday(day.date),
-          'day-completed': day.completed,
-          'day-missed': day.missed,
-          [`day-${day.type}`]: true
-        }"
-      >
-        <div class="day-header">
-          <span class="day-date">
-            {{ new Date(day.date + 'T00:00:00').getDate() }}日
-            {{ weekdayLabels[new Date(day.date + 'T00:00:00').getDay()] }}
-          </span>
-          <span v-if="isToday(day.date)" class="day-today-badge">今天</span>
-          <span class="day-icon">{{ getTypeIcon(day.type) }}</span>
-        </div>
-
-        <div class="day-type">
+          'day-done': day.completed,
+          'day-skipped': day.missed
+        }]">
+        <div class="day-top">
+          <div class="day-date-block">
+            <span class="day-date-num">{{ new Date(day.date + 'T00:00:00').getDate() }}</span>
+            <span class="day-date-wd">周{{ weekdayLabels[new Date(day.date + 'T00:00:00').getDay()] }}</span>
+          </div>
+          <span v-if="isToday(day.date)" class="today-tag">今天</span>
           <span :class="['badge', getBadgeClass(day.type)]">{{ getTypeLabel(day.type) }}</span>
-          <span v-if="day.completed" class="day-status">✅</span>
-          <span v-if="day.missed" class="day-status">⏭️</span>
         </div>
 
-        <div class="day-details" v-if="day.details">
-          {{ day.details }}
-        </div>
+        <div class="day-detail" v-if="day.details">{{ day.details }}</div>
 
-        <div class="day-actions" v-if="day.type !== 'rest' && !day.completed && !day.missed">
-          <button class="btn btn-primary btn-sm day-action-btn" @click="store.markCompleted(day.date)">
-            ✅ 完成
-          </button>
-          <button class="btn btn-sm day-action-btn day-skip-btn" @click="store.skipDay(day.date)">
-            ⏭️ 跳过
-          </button>
+        <div class="day-foot" v-if="day.type !== 'rest' && !day.completed && !day.missed">
+          <button class="btn btn-primary btn-sm" @click="store.markCompleted(day.date)">完成</button>
+          <button class="btn btn-ghost btn-sm" @click="store.skipDay(day.date)">跳过</button>
         </div>
-
-        <div class="day-actions" v-if="day.completed">
-          <button class="btn btn-sm day-action-btn" @click="store.markCompleted(day.date)">
-            ↩️ 撤销
-          </button>
+        <div class="day-foot" v-if="day.completed">
+          <span class="done-badge">✅ 已完成</span>
+          <button class="btn btn-ghost btn-sm" @click="store.markCompleted(day.date)">撤销</button>
         </div>
       </div>
     </div>
 
-    <!-- 空状态 -->
     <div v-if="!store.hasPlan" class="empty-state">
       <span class="empty-icon">📅</span>
       <p>还没有训练计划</p>
-      <button class="btn btn-primary" @click="store.initPlan()">🎯 生成计划</button>
+      <button class="btn btn-primary" @click="store.initPlan()">生成计划</button>
     </div>
 
-    <!-- 调整弹窗 -->
     <Teleport to="body">
       <div class="modal-overlay" v-if="store.showAdjustModal" @click.self="store.cancelAdjust">
-        <div class="modal-content card">
+        <div class="modal-content">
           <h3>调整计划</h3>
           <p class="modal-desc">你错过了 {{ store.adjustDate }} 的训练，如何调整？</p>
-          <div
-            v-for="(opt, i) in getAdjustOptionsForDate(store.plan, store.adjustDate!)"
-            :key="i"
-            class="adjust-option card"
-            @click="store.applyAdjustOption(i)"
-          >
+          <div v-for="(opt, i) in getAdjustOptionsForDate(store.plan, store.adjustDate!)" :key="i"
+            class="adj-option card" @click="store.applyAdjustOption(i)">
             <strong>{{ opt.label }}</strong>
             <p>{{ opt.description }}</p>
           </div>
-          <button class="btn btn-sm" @click="store.cancelAdjust" style="margin-top:8px">取消</button>
+          <button class="btn btn-ghost" style="margin-top:12px" @click="store.cancelAdjust">取消</button>
         </div>
       </div>
     </Teleport>
@@ -131,210 +96,46 @@ function getAdjustOptionsForDate(plan: DayPlan[], date: string) {
 </template>
 
 <style scoped>
-.plan-view {
-  flex: 1;
-  overflow-y: auto;
-  padding: 16px;
-  padding-bottom: 80px;
-}
+.view { flex: 1; overflow-y: auto; padding: 24px 20px; padding-bottom: 100px; }
+.view-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+.view-title { font-size: 28px; font-weight: 700; letter-spacing: -0.5px; }
+.header-actions { display: flex; gap: 8px; }
 
-.plan-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 12px;
-}
+.week-nav { display: flex; align-items: center; justify-content: center; gap: 20px; margin-bottom: 24px; }
+.week-arrow { font-size: 24px; font-weight: 400; color: var(--color-text); padding: 6px 14px; }
+.week-label { font-size: 16px; font-weight: 650; min-width: 150px; text-align: center; color: var(--color-text); }
 
-.plan-header-actions {
-  display: flex;
-  gap: 6px;
-  flex-shrink: 0;
-}
+.day-list { display: flex; flex-direction: column; gap: 10px; }
 
-.plan-title {
-  font-size: 22px;
-  font-weight: 700;
-}
+.day-card { padding: 18px; border-left: 4px solid transparent; border-radius: var(--radius); background: var(--color-surface);
+  transition: all var(--duration-fast) var(--ease-out); }
+.day-card:active { transform: scale(0.985); }
+.day-strength { border-left-color: var(--color-strength); }
+.day-cardio { border-left-color: var(--color-cardio); }
+.day-today { box-shadow: 0 0 0 2px var(--color-primary); }
+.day-done { opacity: 0.7; border-left-color: var(--color-primary) !important; background: var(--color-primary-bg); }
+.day-skipped { opacity: 0.45; border-left-color: var(--color-danger) !important; }
 
-.week-nav {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 12px;
-  margin-bottom: 16px;
-}
+.day-top { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+.day-date-block { display: flex; flex-direction: column; }
+.day-date-num { font-size: 24px; font-weight: 700; line-height: 1.1; letter-spacing: -0.3px; }
+.day-date-wd { font-size: 12px; color: var(--color-text-secondary); font-weight: 500; }
+.today-tag { background: var(--color-primary); color: #fff; padding: 3px 10px; border-radius: 12px;
+  font-size: 11px; font-weight: 600; animation: bounceIn 0.4s var(--ease-bounce); }
 
-.week-label {
-  font-size: 15px;
-  font-weight: 600;
-  min-width: 120px;
-  text-align: center;
-}
+.day-detail { font-size: 13px; color: var(--color-text-secondary); margin-bottom: 10px; line-height: 1.5; }
 
-.nav-arrow {
-  transition: transform var(--duration-fast) var(--ease-out), background var(--duration-fast) ease;
-}
-
-.nav-arrow:active {
-  transform: scale(0.9);
-}
-
-.week-calendar {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.day-card {
-  border-left: 4px solid var(--color-border);
-  transition: all var(--duration) var(--ease-out);
-}
-
-.day-card:active {
-  transform: scale(0.99);
-  box-shadow: var(--shadow-sm);
-}
-
-.day-card.day-strength {
-  border-left-color: var(--color-strength);
-}
-
-.day-card.day-cardio {
-  border-left-color: var(--color-cardio);
-}
-
-.day-today {
-  box-shadow: 0 0 0 2px var(--color-primary), 0 2px 8px rgba(46, 125, 81, 0.15);
-}
-
-.day-completed {
-  opacity: 0.7;
-  border-left-color: var(--color-primary) !important;
-}
-
-.day-missed {
-  opacity: 0.5;
-  border-left-color: #F44336 !important;
-  background: var(--color-missed);
-}
-
-.day-header {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 6px;
-}
-
-.day-date {
-  font-size: 16px;
-  font-weight: 700;
-}
-
-.day-today-badge {
-  background: var(--color-primary-gradient);
-  color: white;
-  padding: 1px 8px;
-  border-radius: 10px;
-  font-size: 11px;
-  font-weight: 600;
-  animation: bounceIn 0.4s var(--ease-bounce);
-  box-shadow: 0 1px 4px rgba(46, 125, 81, 0.3);
-}
-
-.day-icon {
-  margin-left: auto;
-  font-size: 20px;
-}
-
-.day-type {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  margin-bottom: 4px;
-}
-
-.day-status {
-  font-size: 16px;
-  animation: bounceIn 0.3s var(--ease-bounce);
-}
-
-.day-details {
-  font-size: 12px;
-  color: var(--color-text-secondary);
-  margin-bottom: 8px;
-  line-height: 1.4;
-}
-
-.day-actions {
-  display: flex;
-  gap: 8px;
-}
-
-.day-action-btn {
-  transition: all var(--duration-fast) var(--ease-out);
-}
-
-.day-action-btn:active {
-  transform: scale(0.93);
-}
-
-.day-skip-btn {
-  background: var(--color-bg);
-  color: var(--color-text-secondary);
-  border: 1px solid var(--color-border);
-}
-
-.empty-state {
-  text-align: center;
-  padding: 40px 20px;
-  color: var(--color-text-secondary);
-}
-
-.empty-state p {
-  margin-bottom: 16px;
-}
+.day-foot { display: flex; gap: 8px; align-items: center; }
+.done-badge { font-size: 13px; color: var(--color-primary); font-weight: 600; }
 
 /* Modal */
-.modal-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,0.5);
-  display: flex;
-  align-items: flex-end;
-  justify-content: center;
-  z-index: 100;
-}
+.modal-desc { color: var(--color-text-secondary); margin: 8px 0 18px; font-size: 14px; }
+.adj-option { cursor: pointer; margin-bottom: 8px; border: 1px solid transparent; border-radius: var(--radius);
+  transition: all var(--duration-fast) var(--ease-out); }
+.adj-option:active { transform: scale(0.98); border-color: var(--color-primary); background: var(--color-primary-bg); }
+.adj-option p { font-size: 13px; color: var(--color-text-secondary); margin-top: 4px; }
 
-.modal-content {
-  width: 100%;
-  max-width: 400px;
-  border-radius: 16px 16px 0 0;
-  padding: 24px;
-}
-
-.modal-desc {
-  color: var(--color-text-secondary);
-  margin: 8px 0 16px;
-  font-size: 14px;
-}
-
-.adjust-option {
-  cursor: pointer;
-  margin-bottom: 8px;
-  transition: all var(--duration-fast) var(--ease-out);
-  border: 1px solid transparent;
-}
-
-.adjust-option:active {
-  opacity: 0.7;
-  transform: scale(0.98);
-  background: var(--color-primary-bg);
-  border-color: var(--color-primary);
-}
-
-.adjust-option p {
-  font-size: 13px;
-  color: var(--color-text-secondary);
-  margin-top: 4px;
-}
+.empty-state { text-align: center; padding: 48px 24px; animation: fadeInUp 0.4s var(--ease-out); }
+.empty-state .empty-icon { font-size: 56px; margin-bottom: 16px; display: block; animation: float 3s ease-in-out infinite; }
+.empty-state p { margin-bottom: 16px; font-size: 15px; color: var(--color-text-secondary); }
 </style>

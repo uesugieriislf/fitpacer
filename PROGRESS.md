@@ -38,7 +38,7 @@
 | 文件 | 状态 | 说明 |
 |------|------|------|
 | `useRecord.ts` | ✅ 完成 | Pinia store：CRUD + 日期选择 |
-| `RecordView.vue` | ✅ 完成 | 日期导航、预设动作库（力量+有氧）、自定义动作、组数/次数/RPE 滑块、备注 |
+| `RecordView.vue` | ✅ 完成 | 日期导航、预设动作库（按计划自动过滤力量/有氧）、自定义动作、组数/次数/RPE 滑块、备注 |
 | `storage.ts` | ✅ 完成 | TrainingRecord 类型 + localStorage 读写 |
 
 ### dashboard/ — 数据看板 ✅ 已完成
@@ -70,7 +70,7 @@
 |------|------|------|
 | `App.vue` | ✅ 完成 | 底部导航条件渲染，4 个视图切换 |
 | `main.ts` | ✅ 完成 | Vue 3 + Pinia 初始化 |
-| `app.css` | ✅ 完成 | 全局样式、亮/暗 CSS 变量、utility class |
+| `app.css` | ✅ 完成 | v3 Keep 设计系统：纯黑暗色背景、#00B365 主色、SF Pro 字体、Apple 风格卡片阴影层级 |
 | `vite.config.ts` | ✅ 完成 | Vite + Vue + PWA 配置 |
 | `index.html` | ✅ 完成 | PWA meta、移动端 viewport |
 | `.gitignore` | ✅ 完成 | node_modules/ dist/ .vite/ |
@@ -105,8 +105,6 @@
 
 - 睡眠提醒设置了时间，但未实现到点页面提示
 - 训练偏好当前固定"力量+有氧混合"，UI 层面可扩展其他模式
-- RecordView 未从当天 plan 自动推断训练类型（当前手动选择）
-
 ## 变更记录
 
 | 日期 | 变更 | 会话 |
@@ -115,3 +113,4 @@
 | 2026-05-05 | 创建 README.md、PROGRESS.md，完善 RULES.md（进度跟踪+经验教训内化） | #1 |
 | 2026-05-05 | 训练计划调整为 3 次有氧（周二/周五/周六），总时长 150min/周；新增 goal/ 模块（目标设定+BMI+进度条）；BodyData 增加 sleepHours；Settings 增加身高/目标体重设定；Dashboard 增加目标进度卡片 | #1 |
 | 2026-05-05 | **动画与样式大升级**：新增 16 个 CSS 动画关键帧（slideInLeft/Right, scaleInBounce, bounceIn, shimmer, float, ripple, overlayIn, listItemIn 等）；玻璃态模态框（backdrop-filter）；按钮涟漪动效；卡片按压缩放；标签切换左右滑入过渡；底部导航弹跳效果；仪表盘统计数字滚动动画（requestAnimationFrame）；图表渐入显示；睡眠步进器从 0.25h 精确至 0.1h（6 分钟），显示格式改为"X小时Y分钟" | #2 |
+| 2026-05-05 | **选择器 + Keep 风格升级**：RecordView 接入 usePlan，根据当天计划自动推断训练类型并只显示对应动作组（力量日显示力量动作，有氧日显示有氧动作，休息日可自由记录）；设计系统全面参考 Keep：主色修订为 #00B365（更鲜亮的 Keep 绿）、暗色主题背景改为纯黑 (#000)、卡片去除边框改用柔和阴影、圆角半径阶梯增大、字体使用 SF Pro 原生栈、底部导航简化去除顶部指示条、排版层级重新校准 | #3 |

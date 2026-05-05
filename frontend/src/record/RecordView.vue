@@ -1,30 +1,45 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { useRecord } from './useRecord'
-import { weekdayLabels, strengthExercises, cardioExercises, rpeLabels } from '../shared/icons'
+import { usePlan } from '../plan/usePlan'
+import { weekdayLabels, strengthExercises, cardioExercises, rpeLabels, getTypeIcon, getTypeLabel } from '../shared/icons'
+import type { TrainingType } from '../plan/storage'
 
-const store = useRecord()
+const recordStore = useRecord()
+const planStore = usePlan()
 
-// 表单状态
 const showForm = ref(false)
 const formAction = ref('')
 const formSets = ref(3)
 const formReps = ref(10)
 const formRpe = ref(5)
 const formNote = ref('')
-
-// 自定义动作输入
 const customAction = ref('')
 const useCustom = ref(false)
 
-// 当前日期字符串
-const dateStr = store.selectedDate
+const dateStr = recordStore.selectedDate
 const dateObj = new Date(dateStr + 'T00:00:00')
+
+// === 选择器：从计划推断当天训练类型 ===
+const planDay = computed(() =>
+  planStore.plan.find(p => p.date === dateStr) ?? null
+)
+
+const planType = computed<TrainingType | null>(() =>
+  planDay.value?.type ?? null
+)
+
+// 根据计划类型推荐的动作列表
+const suggestedExercises = computed(() => {
+  if (planType.value === 'strength') return strengthExercises
+  if (planType.value === 'cardio') return cardioExercises
+  return [...strengthExercises, ...cardioExercises]
+})
 
 function openForm() {
   formAction.value = ''
   formSets.value = 3
-  formReps.value = 10
+  formReps.value = planType.value === 'cardio' ? 1 : 10
   formRpe.value = 5
   formNote.value = ''
   customAction.value = ''
@@ -35,23 +50,21 @@ function openForm() {
 function submitRecord() {
   const action = useCustom.value ? customAction.value.trim() : formAction.value
   if (!action) return
-
-  store.createRecord({
-    date: store.selectedDate,
+  recordStore.createRecord({
+    date: recordStore.selectedDate,
     action,
     sets: formSets.value,
     reps: formReps.value,
     rpe: formRpe.value,
     note: formNote.value
   })
-
   showForm.value = false
 }
 
 function changeDate(days: number) {
   const d = new Date(dateStr + 'T00:00:00')
   d.setDate(d.getDate() + days)
-  store.selectDate(d.toISOString().slice(0, 10))
+  recordStore.selectDate(d.toISOString().slice(0, 10))
 }
 
 function isToday(d: string): boolean {
@@ -60,98 +73,77 @@ function isToday(d: string): boolean {
 </script>
 
 <template>
-  <div class="record-view view">
-    <h1 class="record-title">📝 训练记录</h1>
+  <div class="view">
+    <h1 class="view-title">训练记录</h1>
 
     <!-- 日期导航 -->
     <div class="date-nav">
-      <button class="btn btn-sm nav-arrow" @click="changeDate(-1)">◀</button>
+      <button class="btn btn-ghost date-arrow" @click="changeDate(-1)">‹</button>
       <div class="date-display">
         <span class="date-main">{{ dateObj.getMonth() + 1 }}/{{ dateObj.getDate() }}</span>
-        <span class="date-weekday">周{{ weekdayLabels[dateObj.getDay()] }}</span>
-        <span v-if="isToday(dateStr)" class="date-today-badge">今天</span>
+        <span class="date-wd">周{{ weekdayLabels[dateObj.getDay()] }}</span>
+        <span v-if="isToday(dateStr)" class="today-tag">今天</span>
       </div>
-      <button class="btn btn-sm nav-arrow" @click="changeDate(1)">▶</button>
+      <button class="btn btn-ghost date-arrow" @click="changeDate(1)">›</button>
     </div>
 
-    <!-- 当日记录列表 -->
+    <!-- 计划类型提示 -->
+    <div v-if="planDay && planDay.type !== 'rest'" class="plan-hint">
+      <span class="plan-hint-icon">{{ getTypeIcon(planDay.type) }}</span>
+      <span>{{ getTypeLabel(planDay.type) }}训练日</span>
+      <span class="plan-hint-detail" v-if="planDay.details">{{ planDay.details }}</span>
+    </div>
+    <div v-if="planDay && planDay.type === 'rest'" class="plan-hint plan-hint-rest">
+      <span>😴</span>
+      <span>休息日</span>
+      <span class="plan-hint-detail">好好恢复，也可以记录拉伸或低强度活动</span>
+    </div>
+
+    <!-- 训练记录列表 -->
     <div class="records-list card-stagger">
-      <div v-if="store.todayRecords.length === 0" class="empty-state">
+      <div v-if="recordStore.todayRecords.length === 0" class="empty-state">
         <span class="empty-icon">📝</span>
-        <p>暂无记录，点击下方按钮添加</p>
+        <p>暂无记录</p>
+        <p class="hint">点击下方按钮添加训练记录</p>
       </div>
 
-      <div
-        v-for="rec in store.todayRecords"
-        :key="rec.id"
-        class="record-card card"
-      >
-        <div class="record-top">
-          <span class="record-action">{{ rec.action }}</span>
-          <button class="btn btn-sm record-delete-btn" @click="store.removeRecord(rec.id)">
-            🗑️
-          </button>
+      <div v-for="rec in recordStore.todayRecords" :key="rec.id" class="record-card card">
+        <div class="rec-top">
+          <span class="rec-action">{{ rec.action }}</span>
+          <button class="btn btn-ghost rec-del" @click="recordStore.removeRecord(rec.id)">✕</button>
         </div>
-        <div class="record-stats">
-          <span>💪 {{ rec.sets }} 组 × {{ rec.reps }} 次</span>
-          <span class="record-rpe">🎯 RPE {{ rec.rpe }} — {{ rpeLabels[rec.rpe] ?? '' }}</span>
+        <div class="rec-meta">
+          <span>{{ rec.sets }} 组 × {{ rec.reps }} 次</span>
+          <span class="rec-rpe">RPE {{ rec.rpe }}</span>
         </div>
-        <div class="record-note" v-if="rec.note">💬 {{ rec.note }}</div>
+        <div class="rec-note" v-if="rec.note">{{ rec.note }}</div>
       </div>
     </div>
 
-    <!-- 添加按钮 -->
-    <button v-if="!showForm" class="btn btn-primary add-btn" @click="openForm">
-      ➕ 添加记录
-    </button>
+    <button v-if="!showForm" class="btn btn-primary add-btn" @click="openForm">+ 添加记录</button>
 
-    <!-- 表单 -->
-    <div v-if="showForm" class="form-panel card">
+    <!-- 录入表单 -->
+    <div v-if="showForm" class="form-panel card card-elevated">
       <h3>新训练记录</h3>
 
-      <!-- 动作选择 -->
       <div class="form-field">
         <div class="label">训练动作</div>
-
-        <!-- 预设动作 -->
         <div class="action-chips" v-if="!useCustom">
-          <div class="chip-section">
-            <span class="chip-label">💪 力量</span>
+          <div class="chip-group">
             <button
-              v-for="ex in strengthExercises"
-              :key="ex"
-              :class="['chip', { 'chip-active': formAction === ex }]"
+              v-for="ex in suggestedExercises" :key="ex"
+              :class="['chip', { on: formAction === ex }]"
               @click="formAction = ex"
             >{{ ex }}</button>
           </div>
-          <div class="chip-section">
-            <span class="chip-label">🏃 有氧</span>
-            <button
-              v-for="ex in cardioExercises"
-              :key="ex"
-              :class="['chip', { 'chip-active': formAction === ex }]"
-              @click="formAction = ex"
-            >{{ ex }}</button>
-          </div>
-          <button class="btn btn-sm chip-toggle-btn" @click="useCustom = true">
-            ✏️ 自定义动作
-          </button>
+          <button class="btn btn-ghost btn-sm chip-toggle" @click="useCustom = true">自定义动作</button>
         </div>
-
-        <!-- 自定义动作 -->
-        <div v-else class="custom-action-area">
-          <input
-            v-model="customAction"
-            class="text-input"
-            placeholder="输入动作名称..."
-          />
-          <button class="btn btn-sm chip-toggle-btn" @click="useCustom = false">
-            ↩️ 使用预设
-          </button>
+        <div v-else class="custom-area">
+          <input v-model="customAction" class="text-input" placeholder="输入动作名称..." />
+          <button class="btn btn-ghost btn-sm chip-toggle" @click="useCustom = false">使用预设</button>
         </div>
       </div>
 
-      <!-- 组数 / 次数 -->
       <div class="form-row">
         <div class="form-field">
           <div class="label">组数</div>
@@ -171,309 +163,82 @@ function isToday(d: string): boolean {
         </div>
       </div>
 
-      <!-- RPE -->
       <div class="form-field">
         <div class="label">RPE {{ formRpe }} — {{ rpeLabels[formRpe] ?? '' }}</div>
-        <input
-          type="range"
-          min="1"
-          max="10"
-          v-model.number="formRpe"
-          class="slider"
-        />
-        <div class="rpe-marks">
-          <span>1 极轻</span>
-          <span>5 中等</span>
-          <span>10 极限</span>
-        </div>
+        <input type="range" min="1" max="10" v-model.number="formRpe" class="slider" />
+        <div class="rpe-marks"><span>极轻</span><span>中等</span><span>极限</span></div>
       </div>
 
-      <!-- 备注 -->
       <div class="form-field">
-        <div class="label">备注（可选）</div>
-        <input
-          v-model="formNote"
-          class="text-input"
-          placeholder="感受、注意事项..."
-        />
+        <div class="label">备注</div>
+        <input v-model="formNote" class="text-input" placeholder="感受、注意事项..." />
       </div>
 
-      <!-- 按钮 -->
       <div class="form-actions">
-        <button class="btn btn-sm" @click="showForm = false">取消</button>
-        <button class="btn btn-primary" @click="submitRecord">💾 保存</button>
+        <button class="btn btn-ghost" @click="showForm = false">取消</button>
+        <button class="btn btn-primary" @click="submitRecord">保存</button>
       </div>
     </div>
   </div>
 </template>
 
 <style scoped>
-.record-view {
-  flex: 1;
-  overflow-y: auto;
-  padding: 16px;
-  padding-bottom: 80px;
-}
+.view { flex: 1; overflow-y: auto; padding: 24px 20px; padding-bottom: 100px; }
+.view-title { font-size: 28px; font-weight: 700; margin-bottom: 20px; letter-spacing: -0.5px; }
 
-.record-title {
-  font-size: 22px;
-  font-weight: 700;
-  margin-bottom: 12px;
-}
+.date-nav { display: flex; align-items: center; justify-content: center; gap: 16px; margin-bottom: 16px; }
+.date-arrow { font-size: 28px; font-weight: 300; color: var(--color-text); padding: 4px 12px; }
+.date-display { display: flex; align-items: center; gap: 10px; min-width: 130px; justify-content: center; }
+.date-main { font-size: 24px; font-weight: 800; }
+.date-wd { font-size: 14px; color: var(--color-text-secondary); }
+.today-tag { background: var(--color-primary-gradient); color: #fff; padding: 2px 10px; border-radius: 10px;
+  font-size: 11px; font-weight: 700; animation: bounceIn 0.4s var(--ease-bounce); }
 
-.date-nav {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 12px;
-  margin-bottom: 20px;
+/* 计划提示 */
+.plan-hint {
+  display: flex; align-items: center; gap: 8px; padding: 12px 16px; margin-bottom: 20px;
+  background: var(--color-primary-bg); border-radius: var(--radius-sm);
+  font-size: 14px; font-weight: 600; color: var(--color-primary);
+  animation: fadeInUp 0.35s var(--ease-out);
 }
+.plan-hint-icon { font-size: 18px; }
+.plan-hint-detail { font-size: 12px; color: var(--color-text-secondary); font-weight: 400; margin-left: auto; }
+.plan-hint-rest { background: rgba(148, 163, 184, 0.08); color: var(--color-rest); }
 
-.nav-arrow {
-  transition: transform var(--duration-fast) var(--ease-out);
-}
+.records-list { display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; }
 
-.nav-arrow:active {
-  transform: scale(0.9);
-}
+.record-card { padding: 16px; transition: all var(--duration-fast) var(--ease-out); }
+.record-card:active { transform: scale(0.99); box-shadow: var(--shadow-xs); }
+.rec-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+.rec-action { font-size: 16px; font-weight: 700; }
+.rec-del { font-size: 16px; color: var(--color-text-tertiary); padding: 2px 6px; }
+.rec-meta { display: flex; gap: 18px; font-size: 14px; color: var(--color-text-secondary); }
+.rec-rpe { color: var(--color-primary); font-weight: 600; }
+.rec-note { margin-top: 6px; font-size: 13px; color: var(--color-text-secondary); font-style: italic; }
 
-.date-display {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  min-width: 120px;
-  justify-content: center;
-}
+.add-btn { width: 100%; padding: 16px; font-size: 16px; border-radius: var(--radius); }
 
-.date-main {
-  font-size: 18px;
-  font-weight: 700;
-}
+.form-panel { margin-top: 20px; padding: 22px; animation: slideUp 0.35s var(--ease-out); }
+.form-panel h3 { font-size: 18px; font-weight: 700; margin-bottom: 20px; }
+.form-field { margin-bottom: 18px; }
+.form-row { display: flex; gap: 14px; }
+.form-row .form-field { flex: 1; }
 
-.date-weekday {
-  font-size: 14px;
-  color: var(--color-text-secondary);
-}
+.action-chips { display: flex; flex-direction: column; gap: 6px; }
+.chip-group { display: flex; flex-wrap: wrap; gap: 8px; }
+.chip { padding: 8px 16px; border: 1.5px solid var(--color-border); border-radius: 20px; background: var(--color-bg);
+  font-size: 14px; font-weight: 500; cursor: pointer; transition: all var(--duration-fast) var(--ease-out); }
+.chip:active { transform: scale(0.95); }
+.chip.on { background: var(--color-primary-gradient); color: #fff; border-color: transparent;
+  box-shadow: var(--color-primary-glow); font-weight: 600; }
+.chip-toggle { margin-top: 4px; color: var(--color-primary); }
+.custom-area { display: flex; flex-direction: column; gap: 6px; }
 
-.date-today-badge {
-  background: var(--color-primary-gradient);
-  color: white;
-  padding: 1px 8px;
-  border-radius: 10px;
-  font-size: 11px;
-  font-weight: 600;
-  animation: bounceIn 0.4s var(--ease-bounce);
-  box-shadow: 0 1px 4px rgba(46, 125, 81, 0.3);
-}
+.stepper { display: flex; align-items: center; gap: 8px; }
+.stepper-val { font-size: 22px; font-weight: 700; min-width: 32px; text-align: center; font-variant-numeric: tabular-nums; }
 
-.records-list {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  margin-bottom: 16px;
-}
-
-.record-card {
-  transition: all var(--duration) var(--ease-out);
-}
-
-.record-card:active {
-  transform: scale(0.99);
-  box-shadow: var(--shadow-sm);
-}
-
-.record-top {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 4px;
-}
-
-.record-action {
-  font-size: 16px;
-  font-weight: 600;
-}
-
-.record-delete-btn {
-  color: var(--color-danger);
-  opacity: 0.4;
-  transition: opacity var(--duration-fast) var(--ease-out);
-}
-
-.record-delete-btn:active {
-  opacity: 1;
-}
-
-.record-stats {
-  display: flex;
-  gap: 16px;
-  font-size: 14px;
-  color: var(--color-text-secondary);
-}
-
-.record-rpe {
-  color: var(--color-primary);
-  font-weight: 600;
-}
-
-.record-note {
-  margin-top: 6px;
-  font-size: 13px;
-  color: var(--color-text-secondary);
-  font-style: italic;
-}
-
-.add-btn {
-  width: 100%;
-  padding: 14px;
-  transition: all var(--duration-fast) var(--ease-out);
-}
-
-.add-btn:active {
-  transform: scale(0.97);
-}
-
-/* Form */
-.form-panel {
-  margin-top: 16px;
-  animation: slideUp 0.3s var(--ease-out);
-}
-
-.form-panel h3 {
-  margin-bottom: 16px;
-}
-
-.form-field {
-  margin-bottom: 16px;
-}
-
-.form-row {
-  display: flex;
-  gap: 16px;
-}
-
-.form-row .form-field {
-  flex: 1;
-}
-
-.action-chips {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.chip-section {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  align-items: center;
-}
-
-.chip-label {
-  font-size: 12px;
-  color: var(--color-text-secondary);
-  width: 100%;
-  margin-bottom: 2px;
-}
-
-.chip {
-  padding: 6px 12px;
-  border: 1px solid var(--color-border);
-  border-radius: 20px;
-  background: var(--color-bg);
-  font-size: 13px;
-  cursor: pointer;
-  transition: all var(--duration-fast) var(--ease-out);
-  -webkit-tap-highlight-color: transparent;
-}
-
-.chip:active {
-  transform: scale(0.95);
-}
-
-.chip-active {
-  background: var(--color-primary);
-  color: white;
-  border-color: var(--color-primary);
-}
-
-.chip-toggle-btn {
-  margin-top: 4px;
-  color: var(--color-primary);
-  background: var(--color-primary-bg);
-  border: none;
-}
-
-.custom-action-area {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.text-input {
-  width: 100%;
-  padding: 10px 12px;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius);
-  background: var(--color-bg);
-  color: var(--color-text);
-  font-size: 15px;
-  outline: none;
-}
-
-.text-input:focus {
-  border-color: var(--color-primary);
-}
-
-.stepper {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.stepper-val {
-  font-size: 20px;
-  font-weight: 700;
-  min-width: 24px;
-  text-align: center;
-}
-
-.slider {
-  width: 100%;
-  accent-color: var(--color-primary);
-}
-
-.rpe-marks {
-  display: flex;
-  justify-content: space-between;
-  font-size: 11px;
-  color: var(--color-text-secondary);
-  margin-top: 4px;
-}
-
-.form-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 8px;
-  margin-top: 8px;
-}
-
-.empty-state {
-  text-align: center;
-  padding: 40px 20px;
-  color: var(--color-text-secondary);
-  animation: fadeIn var(--duration) var(--ease-out);
-}
-
-.empty-state .empty-icon {
-  font-size: 48px;
-  margin-bottom: 12px;
-  display: block;
-  animation: float 3s ease-in-out infinite;
-}
-
-.empty-state p {
-  margin-bottom: 16px;
-  font-size: 15px;
-}
+.empty-state { text-align: center; padding: 40px 20px; animation: fadeInUp 0.4s var(--ease-out); }
+.empty-state .empty-icon { font-size: 48px; margin-bottom: 12px; display: block; animation: float 3s ease-in-out infinite; }
+.empty-state p { font-size: 14px; color: var(--color-text-secondary); }
+.hint { font-size: 12px !important; margin-top: 4px; opacity: 0.6; }
 </style>
