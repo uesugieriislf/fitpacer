@@ -470,6 +470,12 @@ const bmiRanges = [
       </div>
     </Teleport>
     </div>
+
+    <!-- 悬浮记录按钮 -->
+    <button class="fab" @click="openBodyForm">
+      <span class="fab-icon">+</span>
+      <span class="fab-label">录入</span>
+    </button>
   </div>
 </template>
 
@@ -483,7 +489,7 @@ const bmiRanges = [
 }
 
 .view-body {
-  flex: 1; overflow-y: auto; padding: 8px 16px 28px;
+  flex: 1; overflow-y: auto; padding: 8px 16px 0;
 }
 
 .view-title {
@@ -615,4 +621,47 @@ const bmiRanges = [
 .empty-state .empty-icon { font-size: 48px; margin-bottom: 12px; display: block;
   animation: float 3s ease-in-out infinite; }
 .empty-state p { margin-bottom: 12px; font-size: 14px; color: var(--color-text-secondary); }
+
+/* FAB 悬浮记录按钮 */
+.fab {
+  position: fixed;
+  bottom: calc(72px + var(--safe-bottom));
+  right: 16px;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  border: none;
+  background: var(--color-primary-gradient);
+  color: #fff;
+  box-shadow: 0 4px 20px rgba(0, 179, 101, 0.35);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+  cursor: pointer;
+  z-index: 60;
+  transition: transform var(--duration-fast) var(--ease-out), box-shadow var(--duration-fast) var(--ease-out);
+  animation: scaleInBounce 0.4s var(--ease-bounce);
+  -webkit-tap-highlight-color: transparent;
+  outline: none;
+}
+
+.fab:active {
+  transform: scale(0.9);
+  box-shadow: 0 2px 10px rgba(0, 179, 101, 0.25);
+}
+
+.fab-icon {
+  font-size: 28px;
+  font-weight: 400;
+  line-height: 1;
+}
+
+.fab-label {
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  margin-top: -2px;
+}
 </style>

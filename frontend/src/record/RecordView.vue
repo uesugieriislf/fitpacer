@@ -189,7 +189,7 @@ function isToday(d: string): boolean {
 <style scoped>
 .view { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
 .view-header { flex-shrink: 0; padding: 16px 16px 0; }
-.view-body { flex: 1; overflow-y: auto; padding: 8px 16px 28px; }
+.view-body { flex: 1; overflow-y: auto; padding: 8px 16px 0; }
 .view-title { font-size: 24px; font-weight: 700; letter-spacing: -0.4px; }
 
 .date-nav { display: flex; align-items: center; justify-content: center; gap: 16px; margin-bottom: 16px; }
