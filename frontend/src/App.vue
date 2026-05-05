@@ -49,7 +49,7 @@ function switchTab(key: NavKey) {
 </template>
 
 <style scoped>
-.app-shell { height: 100%; display: flex; flex-direction: column; background: var(--color-bg); }
+.app-shell { height: 100vh; height: 100dvh; display: flex; flex-direction: column; background: var(--color-bg); }
 
 .main-content {
   flex: 1; overflow: hidden; display: flex; flex-direction: column; position: relative;
