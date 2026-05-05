@@ -29,8 +29,8 @@
 | `planEngine.ts` | ✅ 完成 | 纯函数：generatePlan / getAdjustOptions / findNextSlot / 周工具 |
 | | ✅ 更新 | CARDIO_DAYS [3,6]→[2,5,6]，有氧 3 次/周达 150min |
 | `usePlan.ts` | ✅ 完成 | Pinia store：计划 CRUD、跳过调整、周导航、ICS 导出 |
-| `PlanView.vue` | ✅ 完成 | 周视图、完成/跳过/撤销、调整弹窗 |
-| `storage.ts` | ✅ 完成 | DayPlan / PlanConfig 类型 + localStorage 读写 |
+| `PlanView.vue` | ✅ 完成 | 周视图、力量训练动作 todolist（展开/收起+进度条+跨周忽视高亮）、有氧完成弹窗（运动类型/时长/心率）、完成/跳过/撤销、调整弹窗、底部 padding |
+| `storage.ts` | ✅ 完成 | DayPlan（+ExerciseItem/CardioRecord）/ PlanConfig 类型 + localStorage 读写 + 旧版迁移 |
 | `ics.ts` | ✅ 完成 | .ics 生成 + 三种导出策略（share / window.open / 下载） |
 
 ### record/ — 训练记录 ✅ 已完成
@@ -117,3 +117,4 @@
 | 2026-05-05 | **标题固定 + 睡眠选择器修复**：所有视图改为标题固定+内容区独立滚动（flex column 布局）；睡眠选择器从10分钟一档改为5分钟一档（0-55）；修复 scroll 事件中间状态导致值不准（改为 scrollend 事件）；修正 openBodyForm 的 snap 逻辑（Math.round(m/5)*5） | #3 |
 | 2026-05-05 | **BMI 颜色区分 + 说明弹窗**：BMI 数值按区间显示不同颜色（偏瘦蓝/正常绿/偏胖橙/肥胖红）；BMI 卡片可点击，弹出说明弹窗展示 BMI 计算公式和各区间标准；背景色跟随分级动态变化 | #3 |
 | 2026-05-05 | **week-nav 固定 + 全局间距收紧**：PlanView 的 week-nav 移入固定头部区域不再跟随滚动；所有视图 padding 收紧（24/20/100→16/16/88）；标题字号缩小（28→24）；section 间距缩减（32→24）；卡片内边距、gap 等全面收窄 | #3 |
+| 2026-05-05 | **计划面板细化**：力量训练动作拆分为 todolist（展开/收起+进度条+跨周忽视高亮⚠️）；有氧训练完成弹窗（运动类型/时长/心率）；DayPlan 新增 exercises/CardioRecord 字段；getNeglectedExercises 跨周追踪；底部 100px padding | #3 |
