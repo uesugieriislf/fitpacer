@@ -18,6 +18,15 @@ function formatSleepHours(hours: number): string {
   return `${h}小时${m}分钟`
 }
 
+// 睡眠输入校验
+function onSleepInput(e: Event) {
+  const target = e.target as HTMLInputElement
+  const val = parseFloat(target.value)
+  if (!isNaN(val) && val >= 1 && val <= 16) {
+    formSleepHours.value = parseFloat(val.toFixed(1))
+  }
+}
+
 // 身体数据表单
 const showBodyForm = ref(false)
 const formWeight = ref(70)
@@ -308,18 +317,27 @@ const qualityLabels: Record<number, string> = {
 
           <div class="form-field">
             <div class="label">睡眠时长</div>
-            <div class="sleep-input-row">
-              <div class="stepper">
-                <button class="btn btn-sm" @click="formSleepHours = Math.max(1, +(formSleepHours - 0.1).toFixed(1))">−</button>
-                <span class="stepper-val sleep-stepper-val">{{ formatSleepHours(formSleepHours) }}</span>
-                <button class="btn btn-sm" @click="formSleepHours = Math.min(16, +(formSleepHours + 0.1).toFixed(1))">+</button>
+            <div class="sleep-combo-row">
+              <button class="btn btn-sm sleep-step-btn" @click="formSleepHours = Math.max(1, +(formSleepHours - 0.5).toFixed(1))">−</button>
+              <div class="sleep-input-wrap">
+                <input
+                  type="number"
+                  :value="formSleepHours"
+                  @input="onSleepInput($event)"
+                  class="sleep-number-input"
+                  step="0.1"
+                  min="1"
+                  max="16"
+                />
+                <span class="sleep-input-suffix">小时</span>
               </div>
-              <span class="sleep-precise-val">{{ formSleepHours.toFixed(1) }}h</span>
+              <button class="btn btn-sm sleep-step-btn" @click="formSleepHours = Math.min(16, +(formSleepHours + 0.5).toFixed(1))">+</button>
+              <span class="sleep-chinese-hint">{{ formatSleepHours(formSleepHours) }}</span>
             </div>
             <div class="rpe-marks">
-              <span>不足</span>
-              <span>7-9h 最佳</span>
-              <span>过多</span>
+              <span>不足 &lt;6h</span>
+              <span>± 按钮 0.5h 步进 · 可手动输入</span>
+              <span>过多 &gt;10h</span>
             </div>
           </div>
 
@@ -598,22 +616,81 @@ const qualityLabels: Record<number, string> = {
   border-radius: 10px;
 }
 
-/* Sleep input */
-.sleep-input-row {
+/* Sleep combo input — 手动输入 + 步进 */
+.sleep-combo-row {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 8px;
 }
 
-.sleep-stepper-val {
-  min-width: 90px;
-  font-size: 17px;
+.sleep-step-btn {
+  min-width: 40px;
+  height: 44px;
+  padding: 0;
+  font-size: 20px;
+  font-weight: 700;
+  background: var(--color-surface);
+  box-shadow: var(--shadow-sm);
+  border: 1.5px solid var(--color-border);
+  border-radius: var(--radius);
 }
 
-.sleep-precise-val {
+.sleep-step-btn:active {
+  transform: scale(0.9);
+}
+
+.sleep-input-wrap {
+  position: relative;
+  flex: 1;
+  max-width: 140px;
+}
+
+.sleep-number-input {
+  width: 100%;
+  padding: 10px 44px 10px 12px;
+  border: 1.5px solid var(--color-border);
+  border-radius: var(--radius);
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-size: 20px;
+  font-weight: 700;
+  outline: none;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+  -moz-appearance: textfield;
+}
+
+.sleep-number-input::-webkit-inner-spin-button,
+.sleep-number-input::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.sleep-number-input:focus {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px var(--color-primary-bg);
+}
+
+.sleep-input-suffix {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
   font-size: 13px;
   color: var(--color-text-secondary);
-  font-variant-numeric: tabular-nums;
+  pointer-events: none;
+}
+
+.sleep-chinese-hint {
+  font-size: 13px;
+  color: var(--color-primary);
+  font-weight: 500;
+  min-width: 72px;
+  text-align: center;
+  background: var(--color-primary-bg);
+  padding: 4px 10px;
+  border-radius: var(--radius-sm);
+  white-space: nowrap;
 }
 
 /* Delete btn */
