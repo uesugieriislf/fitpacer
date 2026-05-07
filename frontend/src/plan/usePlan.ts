@@ -245,6 +245,14 @@ export const usePlan = defineStore('plan', () => {
     showAdjustModal.value = true
   }
 
+  /** 撤回跳过：仅清除 missed 标记，不改变已完成状态 */
+  function undoSkip(date: string) {
+    plan.value = plan.value.map(p =>
+      p.date === date ? { ...p, missed: false } : p
+    )
+    savePlan(plan.value)
+  }
+
   function applyAdjustOption(optionIndex: number) {
     if (!adjustDate.value) return
 
@@ -358,6 +366,7 @@ export const usePlan = defineStore('plan', () => {
     saveStrengthCompletion,
     cancelStrengthModal,
     skipDay,
+    undoSkip,
     applyAdjustOption,
     cancelAdjust,
     postponeToDate,

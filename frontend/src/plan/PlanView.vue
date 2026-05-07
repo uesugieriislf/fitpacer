@@ -411,6 +411,8 @@ const todayDone = computed(() => {
           </div>
           <span v-if="isToday(day.date)" class="today-tag">今天</span>
           <span v-if="day.details?.startsWith('📌')" class="makeup-tag">补练</span>
+          <span v-if="day.missed" class="status-tag status-skipped">⏭️ 已跳过</span>
+          <span v-if="day.completed" class="status-tag status-done">✅ 已完成</span>
           <span :class="['badge', getBadgeClass(day.type)]">{{ getTypeLabel(day.type) }}</span>
         </div>
 
@@ -478,6 +480,10 @@ const todayDone = computed(() => {
             <span v-if="day.type === 'strength'"> · {{ completionPct(day) }}%</span>
           </span>
           <button class="btn btn-ghost btn-sm" @click="store.markCompleted(day.date)">撤销</button>
+        </div>
+        <div class="day-foot" v-if="day.missed">
+          <span class="skipped-badge">⏭️ 已跳过</span>
+          <button class="btn btn-ghost btn-sm" @click="store.undoSkip(day.date)">撤回</button>
         </div>
       </div>
     </div>
@@ -844,6 +850,11 @@ const todayDone = computed(() => {
 .today-tag { background: var(--color-primary); color: #fff; padding: 2px 8px; border-radius: 10px;
   font-size: 10px; font-weight: 600; animation: bounceIn 0.4s var(--ease-bounce); }
 
+/* 状态标签 */
+.status-tag { font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 10px; }
+.status-done { background: var(--color-primary-bg); color: var(--color-primary); }
+.status-skipped { background: rgba(148, 163, 184, 0.12); color: var(--color-text-tertiary); }
+
 /* 补练标签 */
 .makeup-tag {
   background: var(--color-accent-bg); color: var(--color-accent);
@@ -896,6 +907,9 @@ const todayDone = computed(() => {
 .ex-name { font-size: 13px; font-weight: 550; flex: 1; }
 .ex-prescription { font-size: 11px; color: var(--color-text-secondary); white-space: nowrap; }
 .ex-warn { font-size: 10px; color: var(--color-accent); font-weight: 600; margin-left: 4px; }
+
+/* 跳过标签 */
+.skipped-badge { font-size: 12px; color: var(--color-text-tertiary); font-weight: 500; }
 
 /* 按部位摘要 */
 .mg-summary-item {
