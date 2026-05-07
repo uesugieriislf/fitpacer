@@ -21,6 +21,7 @@ type guard 校验数据       →    Zod Schema 运行时校验
 - **构建工具**：统一使用 VP（Vite Plus）进行项目创建、测试、打包、运行
 - **包管理器**：统一使用 pnpm，禁止使用 npm 或 yarn
 - **代码检查**：使用 VP 内置能力，不额外配置 ESLint、Prettier、Husky、commitlint
+- **部署**：说"发布"或"构建"即指部署到 GitHub Pages。执行 `cd frontend && pnpm run deploy`（= vp build + node scripts/deploy-ghpages.mjs）
 
 ## 目录结构
 
