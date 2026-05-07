@@ -32,12 +32,8 @@ const planType = computed<TrainingType | null>(() =>
   planDay.value?.type ?? null
 )
 
-// 根据计划类型决定展示哪些分组
-const showGroups = computed<(MuscleGroup | 'custom')[]>(() => {
-  if (planType.value === 'strength') return [...MUSCLE_GROUPS, 'custom']
-  if (planType.value === 'cardio') return ['cardio', 'custom']
-  return [...MUSCLE_GROUPS, 'cardio', 'custom']
-})
+// 展示全部分组（力量+有氧+自定义）
+const ALL_GROUPS: (MuscleGroup | 'custom')[] = [...MUSCLE_GROUPS, 'cardio', 'custom']
 
 function openForm() {
   formAction.value = ''
@@ -149,26 +145,22 @@ function goToday() {
         <div class="form-field">
           <div class="label">训练动作</div>
 
-          <!-- 按分组展示动作 chip -->
-          <div v-for="g in showGroups" :key="g" class="rec-group">
-            <div v-if="g !== 'custom'" class="rec-group-title">
-              <span>{{ MUSCLE_GROUP_ICONS[g] }}</span>
-              <span>{{ MUSCLE_GROUP_LABELS[g] }}</span>
-            </div>
-            <div v-else class="rec-group-title">
-              <span>✏️</span>
-              <span>自定义</span>
+          <!-- 按分组展示（参考计划页风格） -->
+          <div v-for="g in ALL_GROUPS" :key="g" class="rec-group">
+            <div class="rec-group-head">
+              <span class="rec-group-icon">{{ g === 'custom' ? '✏️' : MUSCLE_GROUP_ICONS[g] }}</span>
+              <span class="rec-group-label">{{ g === 'custom' ? '自定义' : MUSCLE_GROUP_LABELS[g] }}</span>
             </div>
 
-            <div v-if="g === 'custom'" class="custom-area">
-              <input v-model="customAction" class="text-input" placeholder="输入动作名称..." @keyup.enter="useCustom = true; submitRecord()" />
+            <div v-if="g === 'custom'" class="rec-custom-area">
+              <input v-model="customAction" class="text-input" placeholder="输入动作名称，回车添加..." @keyup.enter="submitRecord" />
             </div>
-            <div v-else class="chip-group">
+            <div v-else class="rec-chip-grid">
               <button
                 v-for="ex in exerciseStore.getExercisesByGroup(g)"
                 :key="ex.name"
-                :class="['chip', { on: formAction === ex.name }]"
-                @click="formAction = ex.name; useCustom = false"
+                :class="['rec-chip', { 'rec-chip-on': formAction === ex.name }]"
+                @click="formAction = ex.name; customAction = ''"
               >{{ ex.name }}<span v-if="'id' in ex && (ex as any).id" class="rec-chip-tag">自</span></button>
             </div>
           </div>
@@ -265,19 +257,68 @@ function goToday() {
 .form-row .form-field { flex: 1; }
 
 .action-chips { display: flex; flex-direction: column; gap: 6px; }
-.chip-group { display: flex; flex-wrap: wrap; gap: 8px; }
 
-/* 按分组展示 */
-.rec-group { margin-bottom: 12px; }
-.rec-group-title { font-size: 12px; font-weight: 600; color: var(--color-text-secondary); margin-bottom: 6px; display: flex; align-items: center; gap: 4px; }
-.rec-chip-tag { font-size: 9px; background: var(--color-accent); color: #fff; padding: 1px 4px; border-radius: 4px; margin-left: 3px; font-weight: 700; vertical-align: middle; }
+/* 分组展示 — 参考计划页部位区块风格 */
+.rec-group {
+  margin-bottom: 10px;
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  background: var(--color-bg);
+}
+.rec-group-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  font-size: 13px;
+  font-weight: 650;
+  color: var(--color-text);
+}
+.rec-group-icon { font-size: 15px; width: 22px; text-align: center; }
+.rec-group-label { flex: 1; }
+.rec-chip-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 4px 12px 12px;
+}
+.rec-chip {
+  padding: 6px 12px;
+  border: 1.5px solid var(--color-border);
+  border-radius: 16px;
+  background: var(--color-surface);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--color-text);
+  cursor: pointer;
+  transition: all var(--duration-fast) var(--ease-out);
+}
+.rec-chip:active { transform: scale(0.95); }
+.rec-chip-on {
+  border-color: var(--color-primary);
+  background: var(--color-primary-bg);
+  color: var(--color-primary);
+  font-weight: 600;
+}
+.rec-chip-tag {
+  font-size: 9px;
+  background: var(--color-accent);
+  color: #fff;
+  padding: 1px 4px;
+  border-radius: 4px;
+  margin-left: 3px;
+  font-weight: 700;
+  vertical-align: middle;
+}
+.rec-custom-area {
+  padding: 4px 12px 12px;
+}
 
 .chip { padding: 8px 16px; border: 1.5px solid var(--color-border); border-radius: 20px; background: var(--color-bg);
   font-size: 14px; font-weight: 500; cursor: pointer; transition: all var(--duration-fast) var(--ease-out); }
 .chip:active { transform: scale(0.95); }
 .chip.on { background: var(--color-primary-gradient); color: #fff; border-color: transparent;
   box-shadow: var(--color-primary-glow); font-weight: 600; }
-.chip-toggle { margin-top: 4px; color: var(--color-primary); }
 .custom-area { display: flex; flex-direction: column; gap: 6px; }
 
 .stepper { display: flex; align-items: center; gap: 8px; }
