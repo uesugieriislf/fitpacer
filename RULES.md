@@ -70,3 +70,4 @@ src/
 |------|------|-------------|------|
 | 2026-05-05 | pattern | 每次任务完成后立即 git commit，不要积攒多次修改再提交 | #1 |
 | 2026-05-05 | correction | RULES.md 必须明确写入"每次任务后提交"规则，不能只靠口头约定 | #1 |
+| 2026-05-07 | bug | `new Date().toISOString()` 返回 UTC 时间！东八区晚上 22:14 会变成 14:14。永远用本地 getters（getHours/getMinutes）拼接时间戳，不要用 toISOString 存基于时间的信息 | #4 |

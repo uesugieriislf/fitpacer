@@ -1,12 +1,20 @@
 // plan/storage.ts — localStorage 读写 + 类型定义
 
 export type TrainingType = 'strength' | 'cardio' | 'rest'
+export type { MuscleGroup } from '../shared/exercises'
 
 /** 力量训练单项动作 */
 export interface ExerciseItem {
-  name: string          // "引体向上"
+  name: string          // "引体向上（宽距）"
   prescription: string  // "3×8-12"
   completed: boolean
+  muscleGroup?: MuscleGroup   // 所属部位，旧数据可能没有
+  /** 实际完成的组数（用户在弹窗中输入） */
+  actualSets?: number
+  /** 实际完成的次数 */
+  actualReps?: number
+  /** 实际 RPE（1-10） */
+  actualRpe?: number
 }
 
 /** 有氧训练完成记录 */
@@ -26,6 +34,10 @@ export interface DayPlan {
   exercises: ExerciseItem[]
   /** 有氧训练完成时的记录（null 表示未记录） */
   cardioRecord: CardioRecord | null
+  /** 运动前拉伸是否完成 */
+  warmupDone: boolean
+  /** 运动后放松是否完成 */
+  cooldownDone: boolean
 }
 
 export interface PlanConfig {
@@ -43,11 +55,13 @@ export function loadPlan(): DayPlan[] {
     if (!raw) return []
     const data = JSON.parse(raw)
     if (!Array.isArray(data)) return []
-    // 迁移旧数据：补全 exercises 和 cardioRecord 字段
+    // 迁移旧数据：补全 exercises、cardioRecord、warmupDone、cooldownDone 字段
     return data.map((d: any) => ({
       ...d,
       exercises: Array.isArray(d.exercises) ? d.exercises : [],
-      cardioRecord: d.cardioRecord ?? null
+      cardioRecord: d.cardioRecord ?? null,
+      warmupDone: d.warmupDone ?? false,
+      cooldownDone: d.cooldownDone ?? false
     })) as DayPlan[]
   } catch {
     return []

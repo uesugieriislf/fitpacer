@@ -7,7 +7,12 @@ import { loadRecords, saveRecords, addRecord, deleteRecord, getRecordsByDate, ge
 
 export const useRecord = defineStore('record', () => {
   const records = ref<TrainingRecord[]>(loadRecords())
-  const selectedDate = ref<string>(new Date().toISOString().slice(0, 10))
+  const selectedDate = ref<string>(getDateStr())
+
+  function getDateStr(): string {
+    const d = new Date()
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+  }
 
   // 当前选中日期的记录
   const todayRecords = computed(() =>

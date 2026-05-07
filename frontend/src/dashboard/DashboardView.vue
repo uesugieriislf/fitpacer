@@ -3,11 +3,17 @@ import { ref, computed, onMounted, nextTick, watch } from 'vue'
 import { Chart, registerables } from 'chart.js'
 import { useDashboard } from './useDashboard'
 import { useGoal } from '../goal/useGoal'
+import CalendarPanel from '../calendar/CalendarPanel.vue'
+import StatsPanel from '../stats/StatsPanel.vue'
+import { usePlan } from '../plan/usePlan'
+import { useRecord } from '../record/useRecord'
 
 Chart.register(...registerables)
 
 const store = useDashboard()
 const goalStore = useGoal()
+const planStore = usePlan()
+const recordStore = useRecord()
 
 // 睡眠时长格式化
 function formatSleepHours(hours: number): string {
@@ -96,8 +102,9 @@ const totalSleepHours = () => {
 }
 
 function submitBodyData() {
+  const _now = new Date()
   store.addBodyData({
-    date: new Date().toISOString().slice(0, 10),
+    date: `${_now.getFullYear()}-${String(_now.getMonth() + 1).padStart(2, '0')}-${String(_now.getDate()).padStart(2, '0')}`,
     weight: formWeight.value,
     waist: formWaist.value,
     sleepHours: totalSleepHours(),
@@ -373,6 +380,17 @@ function formatTime(createdAt: string): string {
         </div>
       </div>
     </section>
+
+    <!-- 训练日历 -->
+    <CalendarPanel
+      :plan="planStore.plan"
+      :recorded-dates="recordStore.recordedDates"
+    />
+
+    <!-- 训练统计 -->
+    <StatsPanel
+      :records="recordStore.records"
+    />
 
     <!-- 身体数据 -->
     <section class="section">

@@ -53,13 +53,16 @@ const STRENGTH_DAYS = [1, 4] // 周一、周四
 const CARDIO_DAYS = [2, 5, 0] // 周二、周五、周日（3次有氧，不连续）
 const LONG_CARDIO_DAY = 0    // 周日 = 长有氧
 
-/** 力量训练动作定义（name + prescription） */
+/** 力量训练动作定义（不再固��生成，保留仅供旧数据兼容） */
 const STRENGTH_EXERCISE_DEFS: { name: string; prescription: string }[] = [
   { name: '引体向上', prescription: '3×8-12' },
   { name: '双杠臂屈伸', prescription: '3×8-12' },
   { name: '下斜俯卧撑', prescription: '3×10-15' },
   { name: '保加利亚分腿蹲', prescription: '3×10-12/侧' }
 ]
+
+/** 力量日部位描述 */
+const STRENGTH_DETAILS = '胸 / 肩背 / 腿'
 
 /** 有氧训练动作定义 */
 export const CARDIO_ACTIONS: string[] = ['慢跑', '跳绳', '骑行', '游泳', '快走', '划船机', '椭圆机', '爬楼梯']
@@ -68,7 +71,8 @@ export const CARDIO_ACTIONS: string[] = ['慢跑', '跳绳', '骑行', '游泳',
 export function ensureDayExercises(day: DayPlan): DayPlan {
   if (day.exercises && day.exercises.length > 0) return day
   if (day.type === 'strength') {
-    return { ...day, exercises: getStrengthExercises() }
+    // 改为空列表，用户在弹窗中按部位自由选择动作
+    return { ...day, exercises: [] }
   }
   if (day.type === 'cardio') {
     const isLong = day.details?.includes('长有氧') ?? false
@@ -78,11 +82,12 @@ export function ensureDayExercises(day: DayPlan): DayPlan {
 }
 
 export function getStrengthExercises(): ExerciseItem[] {
-  return STRENGTH_EXERCISE_DEFS.map(e => ({ ...e, completed: false }))
+  // 用户按部位自由选择，不再预生成
+  return []
 }
 
 function getStrengthDetails(): string {
-  return STRENGTH_EXERCISE_DEFS.map(e => `${e.name} ${e.prescription}`).join(' | ')
+  return STRENGTH_DETAILS
 }
 
 export function getCardioExercises(isLong: boolean): ExerciseItem[] {
@@ -121,7 +126,7 @@ export function generatePlan(config: PlanConfig): DayPlan[] {
     let cardioRecord: CardioRecord | null = null
     if (type === 'strength') {
       details = getStrengthDetails()
-      exercises = getStrengthExercises()
+      exercises = []
     } else if (type === 'cardio') {
       details = getCardioDetails(dow === LONG_CARDIO_DAY)
       exercises = getCardioExercises(dow === LONG_CARDIO_DAY)
@@ -223,7 +228,7 @@ export function moveToSlot(plan: DayPlan[], fromDate: string, toDate: string): D
         ? getStrengthDetails()
         : (fromDay.details || '')
       const exercises = fromDay.type === 'strength'
-        ? getStrengthExercises()
+        ? []
         : getCardioExercises(fromDay.details?.includes('长有氧') ?? false)
       return {
         ...toDay,

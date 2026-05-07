@@ -6,6 +6,20 @@ import type { DayPlan, PlanConfig, CardioRecord } from './storage'
 import { loadPlan, savePlan, loadConfig, saveConfig } from './storage'
 import { generatePlan, getAdjustOptions, getWeekInfo, getCurrentWeekMonday, formatDate, parseDate, addDays, getNeglectedExercises, ensureDayExercises, moveToSlot } from './planEngine'
 import { exportICS, getICSBlobUrl, getICSFile } from './ics'
+import { useRecord } from '../record/useRecord'
+import { generateId as generateRecordId } from '../record/storage'
+import type { TrainingRecord } from '../record/storage'
+
+/** 自动记录的标记前缀 */
+const AUTO_PREFIX = '📋 '
+
+/** 从 prescription 解析组数和次数，如 "3×8-12" → { sets:3, reps:8 } */
+function parsePrescription(p: string): { sets: number; reps: number } {
+  const parts = p.split('×')
+  const sets = parseInt(parts[0]) || 3
+  const reps = parseInt(parts[1]?.split('-')[0]) || 8
+  return { sets, reps }
+}
 
 export const usePlan = defineStore('plan', () => {
   // === 状态 ===
@@ -38,7 +52,15 @@ export const usePlan = defineStore('plan', () => {
   })
 
   /** 今日训练信息 */
-  const todayStr = computed(() => formatDate(new Date()))
+  /** 今日日期（响应式：页面可见时自动刷新，解决跨天/PWA后台残留问题） */
+  const todayStr = ref(formatDate(new Date()))
+  if (typeof document !== 'undefined') {
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') {
+        todayStr.value = formatDate(new Date())
+      }
+    })
+  }
 
   const todayPlan = computed(() =>
     plan.value.find(p => p.date === todayStr.value) ?? null
@@ -122,6 +144,12 @@ export const usePlan = defineStore('plan', () => {
       p.date === date ? { ...p, completed: !p.completed, missed: false } : p
     )
     savePlan(plan.value)
+
+    // 如果是撤销完成，清除自动记录
+    const wasCompleted = plan.value.find(p => p.date === date)
+    if (wasCompleted && !wasCompleted.completed) {
+      clearAutoRecords(date, useRecord().records)
+    }
   }
 
   /** 切换力量训练中单个动作的完成状态 */
@@ -138,13 +166,27 @@ export const usePlan = defineStore('plan', () => {
   }
 
   /** 保存有氧训练完成记录并标记完成 */
-  function saveCardioRecord(date: string, record: CardioRecord) {
+  function saveCardioRecord(date: string, record: CardioRecord, warmupDone = false, cooldownDone = false) {
     plan.value = plan.value.map(p =>
-      p.date === date ? { ...p, cardioRecord: record, completed: true, missed: false } : p
+      p.date === date ? { ...p, cardioRecord: record, completed: true, missed: false, warmupDone, cooldownDone } : p
     )
     savePlan(plan.value)
     showCardioModal.value = false
     cardioModalDate.value = null
+
+    // 自动写入训练记录
+    const recordStore = useRecord()
+    clearAutoRecords(date, recordStore.records)
+    recordStore.createRecord({
+      date,
+      action: record.action || '有氧训练',
+      sets: 1,
+      reps: record.durationMinutes,
+      rpe: 7,
+      note: AUTO_PREFIX + '有氧训练'
+    })
+    if (warmupDone) recordStore.createRecord({ date, action: '运动前拉伸', sets: 1, reps: 1, rpe: 5, note: AUTO_PREFIX + '热身' })
+    if (cooldownDone) recordStore.createRecord({ date, action: '运动后放松', sets: 1, reps: 1, rpe: 5, note: AUTO_PREFIX + '放松' })
   }
 
   /** 关闭有氧完成弹窗（不标记完成） */
@@ -154,13 +196,41 @@ export const usePlan = defineStore('plan', () => {
   }
 
   /** 保存力量训练完成情况并标记完成 */
-  function saveStrengthCompletion(date: string, exercises: typeof plan.value[0]['exercises']) {
+  function saveStrengthCompletion(date: string, exercises: typeof plan.value[0]['exercises'], warmupDone = false, cooldownDone = false) {
     plan.value = plan.value.map(p =>
-      p.date === date ? { ...p, exercises, completed: true, missed: false } : p
+      p.date === date ? { ...p, exercises, completed: true, missed: false, warmupDone, cooldownDone } : p
     )
     savePlan(plan.value)
     showStrengthModal.value = false
     strengthModalDate.value = null
+
+    // 自动写入训练记录：每个完成动作一条记录
+    const recordStore = useRecord()
+    clearAutoRecords(date, recordStore.records)
+    exercises.filter(e => e.completed).forEach(ex => {
+      const sets = ex.actualSets ?? parsePrescription(ex.prescription).sets
+      const reps = ex.actualReps ?? parsePrescription(ex.prescription).reps
+      const rpe = ex.actualRpe ?? 7
+      recordStore.createRecord({
+        date,
+        action: ex.name,
+        sets,
+        reps,
+        rpe,
+        note: AUTO_PREFIX + '力量训练'
+      })
+    })
+    if (warmupDone) recordStore.createRecord({ date, action: '运动前拉伸', sets: 1, reps: 1, rpe: 5, note: AUTO_PREFIX + '热身' })
+    if (cooldownDone) recordStore.createRecord({ date, action: '运动后放松', sets: 1, reps: 1, rpe: 5, note: AUTO_PREFIX + '放松' })
+  }
+
+  /** 清除某天的自动记录（避免撤销→重新完成产生重复） */
+  function clearAutoRecords(date: string, records: TrainingRecord[]) {
+    const autoIds = records
+      .filter(r => r.date === date && r.note.startsWith(AUTO_PREFIX))
+      .map(r => r.id)
+    const recordStore = useRecord()
+    autoIds.forEach(id => recordStore.removeRecord(id))
   }
 
   /** 关闭力量完成弹窗（不标记完成） */

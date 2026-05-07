@@ -78,11 +78,10 @@ describe('generatePlan', () => {
     expect(plan[2].type).toBe('rest')
   })
 
-  it('力量日包含 exercises', () => {
+  it('力量日 exercises 为空（用户按部位自由选择）', () => {
     const plan = generatePlan(baseConfig)
     const strengthDay = plan[0]
-    expect(strengthDay.exercises!.length).toBeGreaterThan(0)
-    expect(strengthDay.exercises![0]).toHaveProperty('completed', false)
+    expect(strengthDay.exercises!.length).toBe(0)
   })
 
   it('周日为长有氧（60-70 分钟）', () => {
@@ -152,17 +151,10 @@ describe('getAdjustOptions', () => {
 // === 被忽视动作 ===
 
 describe('getNeglectedExercises', () => {
-  it('检测未完成动作', () => {
+  it('检测未完成动作（新模式下无预置动作，忽略为空）', () => {
     const plan = generatePlan(baseConfig)
-    // 手动将第一个力量日的动作标记为未完成（explicitly not completed）
-    // 默认已是未完成，但 missed 为 false 时才会被统计
-    const mon = plan[0]
-    expect(mon.type).toBe('strength')
-    
-    const neglected = getNeglectedExercises(plan, '2026-05-11') // 下周一查看
-    // 此时 plan[0] 在 7 天内，missed=false，exercises 全部 completed=false
-    expect(neglected.size).toBeGreaterThan(0)
-    expect(neglected.has('引体向上')).toBe(true)
+    const neglected = getNeglectedExercises(plan, '2026-05-11')
+    expect(neglected.size).toBe(0)
   })
 
   it('已完成的动作不计入', () => {
@@ -224,13 +216,13 @@ describe('ensureDayExercises', () => {
     expect(result.exercises![0].name).toBe('测试')
   })
 
-  it('旧力量日自动补全 exercises', () => {
+  it('旧力量日 exercises 不再自动补全（用户自由选择）', () => {
     const day: DayPlan = {
       date: '2026-05-04', type: 'strength', completed: false,
       missed: false, details: ''
     }
     const result = ensureDayExercises(day)
-    expect(result.exercises!.length).toBe(4) // 4 个力量动作
+    expect(result.exercises!.length).toBe(0)
   })
 
   it('旧有氧日自动补全', () => {
@@ -257,10 +249,9 @@ describe('ensureDayExercises', () => {
 // === 动作生成 ===
 
 describe('getStrengthExercises', () => {
-  it('返回 4 个力量动作', () => {
+  it('返回空数组（用户按部位自由选择）', () => {
     const ex = getStrengthExercises()
-    expect(ex.length).toBe(4)
-    expect(ex.every(e => e.completed === false)).toBe(true)
+    expect(ex.length).toBe(0)
   })
 })
 

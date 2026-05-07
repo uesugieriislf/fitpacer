@@ -17,12 +17,12 @@ const formNote = ref('')
 const customAction = ref('')
 const useCustom = ref(false)
 
-const dateStr = recordStore.selectedDate
-const dateObj = new Date(dateStr + 'T00:00:00')
+const dateStr = computed(() => recordStore.selectedDate)
+const dateObj = computed(() => new Date(dateStr.value + 'T00:00:00'))
 
 // === 选择器：从计划推断当天训练类型 ===
 const planDay = computed(() =>
-  planStore.plan.find(p => p.date === dateStr) ?? null
+  planStore.plan.find(p => p.date === dateStr.value) ?? null
 )
 
 const planType = computed<TrainingType | null>(() =>
@@ -61,14 +61,22 @@ function submitRecord() {
   showForm.value = false
 }
 
+function fmtLocalDate(d: Date): string {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+}
+
 function changeDate(days: number) {
-  const d = new Date(dateStr + 'T00:00:00')
+  const d = new Date(dateStr.value + 'T00:00:00')
   d.setDate(d.getDate() + days)
-  recordStore.selectDate(d.toISOString().slice(0, 10))
+  recordStore.selectDate(fmtLocalDate(d))
 }
 
 function isToday(d: string): boolean {
-  return d === new Date().toISOString().slice(0, 10)
+  return d === fmtLocalDate(new Date())
+}
+
+function goToday() {
+  recordStore.selectDate(fmtLocalDate(new Date()))
 }
 </script>
 
@@ -88,18 +96,21 @@ function isToday(d: string): boolean {
         <span v-if="isToday(dateStr)" class="today-tag">今天</span>
       </div>
       <button class="btn btn-ghost date-arrow" @click="changeDate(1)">›</button>
+      <button v-if="!isToday(dateStr)" class="btn btn-sm btn-outline today-jump" @click="goToday">回到今天</button>
     </div>
 
     <!-- 计划类型提示 -->
-    <div v-if="planDay && planDay.type !== 'rest'" class="plan-hint">
-      <span class="plan-hint-icon">{{ getTypeIcon(planDay.type) }}</span>
-      <span>{{ getTypeLabel(planDay.type) }}训练日</span>
-      <span class="plan-hint-detail" v-if="planDay.details">{{ planDay.details }}</span>
+    <div v-if="planDay && planDay.type === 'strength'" class="plan-hint plan-hint-strength">
+      <span>💪</span>
+      <span>力量训练，加油！</span>
     </div>
-    <div v-if="planDay && planDay.type === 'rest'" class="plan-hint plan-hint-rest">
+    <div v-else-if="planDay && planDay.type === 'cardio'" class="plan-hint plan-hint-cardio">
+      <span>🏃</span>
+      <span>有氧训练，动起来！</span>
+    </div>
+    <div v-else-if="planDay && planDay.type === 'rest'" class="plan-hint plan-hint-rest">
       <span>😴</span>
-      <span>休息日</span>
-      <span class="plan-hint-detail">好好恢复，也可以记录拉伸或低强度活动</span>
+      <span>休息日，好好恢复</span>
     </div>
 
     <!-- 训练记录列表 -->
@@ -123,67 +134,70 @@ function isToday(d: string): boolean {
       </div>
     </div>
 
-    <!-- 录入表单 -->
-    <div v-if="showForm" class="form-panel card card-elevated">
-      <h3>新训练记录</h3>
-
-      <div class="form-field">
-        <div class="label">训练动作</div>
-        <div class="action-chips" v-if="!useCustom">
-          <div class="chip-group">
-            <button
-              v-for="ex in suggestedExercises" :key="ex"
-              :class="['chip', { on: formAction === ex }]"
-              @click="formAction = ex"
-            >{{ ex }}</button>
-          </div>
-          <button class="btn btn-ghost btn-sm chip-toggle" @click="useCustom = true">自定义动作</button>
-        </div>
-        <div v-else class="custom-area">
-          <input v-model="customAction" class="text-input" placeholder="输入动作名称..." />
-          <button class="btn btn-ghost btn-sm chip-toggle" @click="useCustom = false">使用预设</button>
-        </div>
-      </div>
-
-      <div class="form-row">
-        <div class="form-field">
-          <div class="label">组数</div>
-          <div class="stepper">
-            <button class="btn btn-sm" @click="formSets = Math.max(1, formSets - 1)">−</button>
-            <span class="stepper-val">{{ formSets }}</span>
-            <button class="btn btn-sm" @click="formSets = Math.min(10, formSets + 1)">+</button>
-          </div>
-        </div>
-        <div class="form-field">
-          <div class="label">次数</div>
-          <div class="stepper">
-            <button class="btn btn-sm" @click="formReps = Math.max(1, formReps - 1)">−</button>
-            <span class="stepper-val">{{ formReps }}</span>
-            <button class="btn btn-sm" @click="formReps = Math.min(50, formReps + 1)">+</button>
-          </div>
-        </div>
-      </div>
-
-      <div class="form-field">
-        <div class="label">RPE {{ formRpe }} — {{ rpeLabels[formRpe] ?? '' }}</div>
-        <input type="range" min="1" max="10" v-model.number="formRpe" class="slider" />
-        <div class="rpe-marks"><span>极轻</span><span>中等</span><span>极限</span></div>
-      </div>
-
-      <div class="form-field">
-        <div class="label">备注</div>
-        <input v-model="formNote" class="text-input" placeholder="感受、注意事项..." />
-      </div>
-
-      <div class="form-actions">
-        <button class="btn btn-ghost" @click="showForm = false">取消</button>
-        <button class="btn btn-primary" @click="submitRecord">保存</button>
-      </div>
-    </div>
     </div>
 
     <!-- 悬浮添加按钮 -->
-    <button v-if="!showForm" class="fab" @click="openForm">+</button>
+    <button class="fab" @click="openForm">+</button>
+
+    <!-- 录入弹窗 -->
+    <div v-if="showForm" class="modal-overlay" @click="showForm = false">
+      <div class="modal-content" @click.stop>
+        <h3>新训练记录</h3>
+
+        <div class="form-field">
+          <div class="label">训练动作</div>
+          <div class="action-chips" v-if="!useCustom">
+            <div class="chip-group">
+              <button
+                v-for="ex in suggestedExercises" :key="ex"
+                :class="['chip', { on: formAction === ex }]"
+                @click="formAction = ex"
+              >{{ ex }}</button>
+            </div>
+            <button class="btn btn-ghost btn-sm chip-toggle" @click="useCustom = true">自定义动作</button>
+          </div>
+          <div v-else class="custom-area">
+            <input v-model="customAction" class="text-input" placeholder="输入动作名称..." />
+            <button class="btn btn-ghost btn-sm chip-toggle" @click="useCustom = false">使用预设</button>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-field">
+            <div class="label">组数</div>
+            <div class="stepper">
+              <button class="btn btn-sm" @click="formSets = Math.max(1, formSets - 1)">−</button>
+              <span class="stepper-val">{{ formSets }}</span>
+              <button class="btn btn-sm" @click="formSets = Math.min(10, formSets + 1)">+</button>
+            </div>
+          </div>
+          <div class="form-field">
+            <div class="label">次数</div>
+            <div class="stepper">
+              <button class="btn btn-sm" @click="formReps = Math.max(1, formReps - 1)">−</button>
+              <span class="stepper-val">{{ formReps }}</span>
+              <button class="btn btn-sm" @click="formReps = Math.min(50, formReps + 1)">+</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-field">
+          <div class="label">RPE {{ formRpe }} — {{ rpeLabels[formRpe] ?? '' }}</div>
+          <input type="range" min="1" max="10" v-model.number="formRpe" class="slider" />
+          <div class="rpe-marks"><span>极轻</span><span>中等</span><span>极限</span></div>
+        </div>
+
+        <div class="form-field">
+          <div class="label">备注</div>
+          <input v-model="formNote" class="text-input" placeholder="感受、注意事项..." />
+        </div>
+
+        <div class="form-actions">
+          <button class="btn btn-ghost" @click="showForm = false">取消</button>
+          <button class="btn btn-primary" @click="submitRecord">保存</button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -197,19 +211,20 @@ function isToday(d: string): boolean {
 .date-wd { font-size: 14px; color: var(--color-text-secondary); }
 .today-tag { background: var(--color-primary-gradient); color: #fff; padding: 2px 10px; border-radius: 10px;
   font-size: 11px; font-weight: 700; animation: bounceIn 0.4s var(--ease-bounce); }
+.today-jump { font-size: 11px; padding: 4px 10px; flex-shrink: 0; }
 
 /* 计划提示 */
 .plan-hint {
-  display: flex; align-items: center; gap: 8px; padding: 12px 16px; margin-bottom: 20px;
-  background: var(--color-primary-bg); border-radius: var(--radius-sm);
-  font-size: 14px; font-weight: 600; color: var(--color-primary);
+  display: flex; align-items: center; gap: 6px; padding: 8px 14px; margin-bottom: 16px;
+  border-radius: var(--radius-sm);
+  font-size: 13px; font-weight: 600;
   animation: fadeInUp 0.35s var(--ease-out);
 }
-.plan-hint-icon { font-size: 18px; }
-.plan-hint-detail { font-size: 12px; color: var(--color-text-secondary); font-weight: 400; margin-left: auto; }
+.plan-hint-strength { background: var(--color-strength-bg); color: var(--color-strength); }
+.plan-hint-cardio { background: var(--color-cardio-bg); color: var(--color-cardio); }
 .plan-hint-rest { background: rgba(148, 163, 184, 0.08); color: var(--color-rest); }
 
-.records-list { display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; padding-bottom: 80px; }
+.records-list { display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; }
 
 .record-card { padding: 16px; transition: all var(--duration-fast) var(--ease-out); }
 .record-card:active { transform: scale(0.99); box-shadow: var(--shadow-xs); }
@@ -233,8 +248,6 @@ function isToday(d: string): boolean {
 }
 .fab:active { transform: scale(0.9); box-shadow: 0 2px 12px rgba(0, 179, 101, 0.3); }
 
-.form-panel { margin-top: 20px; padding: 22px; animation: slideUp 0.35s var(--ease-out); }
-.form-panel h3 { font-size: 18px; font-weight: 700; margin-bottom: 20px; }
 .form-field { margin-bottom: 18px; }
 .form-row { display: flex; gap: 14px; }
 .form-row .form-field { flex: 1; }

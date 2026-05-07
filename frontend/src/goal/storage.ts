@@ -17,11 +17,14 @@ export interface GoalConfig {
 
 const GOAL_KEY = 'fitpacer_goal_config'
 
+const _now = new Date()
+const _dateStr = `${_now.getFullYear()}-${String(_now.getMonth() + 1).padStart(2, '0')}-${String(_now.getDate()).padStart(2, '0')}`
+
 const DEFAULT_GOAL: GoalConfig = {
   height: 170,
   targetWeight: 65,
   startWeight: 80,
-  startDate: new Date().toISOString().slice(0, 10),
+  startDate: _dateStr,
   weeklyCardioTarget: 150,
   weeklyStrengthTarget: 2
 }
