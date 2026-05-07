@@ -3,8 +3,9 @@ import { ref, computed } from 'vue'
 import { useRecord } from './useRecord'
 import { usePlan } from '../plan/usePlan'
 import { useExercise } from '../exercise/useExercise'
-import { weekdayLabels, cardioExercises, rpeLabels } from '../shared/icons'
-import { MUSCLE_GROUPS } from '../shared/exercises'
+import { weekdayLabels, rpeLabels } from '../shared/icons'
+import { MUSCLE_GROUPS, MUSCLE_GROUP_LABELS, MUSCLE_GROUP_ICONS } from '../shared/exercises'
+import type { MuscleGroup } from '../shared/exercises'
 import type { TrainingType } from '../plan/storage'
 
 const recordStore = useRecord()
@@ -18,7 +19,6 @@ const formReps = ref(10)
 const formRpe = ref(5)
 const formNote = ref('')
 const customAction = ref('')
-const useCustom = ref(false)
 
 const dateStr = computed(() => recordStore.selectedDate)
 const dateObj = computed(() => new Date(dateStr.value + 'T00:00:00'))
@@ -32,28 +32,11 @@ const planType = computed<TrainingType | null>(() =>
   planDay.value?.type ?? null
 )
 
-// 根据计划类型推荐的动作列表（使用动作库 + 有氧预设）
-const suggestedExercises = computed(() => {
-  if (planType.value === 'strength') {
-    // 从动作库取所有力量动作（内置+自定义），去重后扁平为名称列表
-    const names = new Set<string>()
-    for (const mg of MUSCLE_GROUPS) {
-      for (const ex of exerciseStore.getExercisesByGroup(mg)) {
-        names.add(ex.name)
-      }
-    }
-    return [...names]
-  }
-  if (planType.value === 'cardio') return cardioExercises
-  // 休息日：力量 + 有氧
-  const all = new Set<string>()
-  for (const mg of MUSCLE_GROUPS) {
-    for (const ex of exerciseStore.getExercisesByGroup(mg)) {
-      all.add(ex.name)
-    }
-  }
-  cardioExercises.forEach(e => all.add(e))
-  return [...all]
+// 根据计划类型决定展示哪些分组
+const showGroups = computed<(MuscleGroup | 'custom')[]>(() => {
+  if (planType.value === 'strength') return [...MUSCLE_GROUPS, 'custom']
+  if (planType.value === 'cardio') return ['cardio', 'custom']
+  return [...MUSCLE_GROUPS, 'cardio', 'custom']
 })
 
 function openForm() {
@@ -63,12 +46,11 @@ function openForm() {
   formRpe.value = 5
   formNote.value = ''
   customAction.value = ''
-  useCustom.value = false
   showForm.value = true
 }
 
 function submitRecord() {
-  const action = useCustom.value ? customAction.value.trim() : formAction.value
+  const action = formAction.value || customAction.value.trim()
   if (!action) return
   recordStore.createRecord({
     date: recordStore.selectedDate,
@@ -166,19 +148,29 @@ function goToday() {
 
         <div class="form-field">
           <div class="label">训练动作</div>
-          <div class="action-chips" v-if="!useCustom">
-            <div class="chip-group">
-              <button
-                v-for="ex in suggestedExercises" :key="ex"
-                :class="['chip', { on: formAction === ex }]"
-                @click="formAction = ex"
-              >{{ ex }}</button>
+
+          <!-- 按分组展示动作 chip -->
+          <div v-for="g in showGroups" :key="g" class="rec-group">
+            <div v-if="g !== 'custom'" class="rec-group-title">
+              <span>{{ MUSCLE_GROUP_ICONS[g] }}</span>
+              <span>{{ MUSCLE_GROUP_LABELS[g] }}</span>
             </div>
-            <button class="btn btn-ghost btn-sm chip-toggle" @click="useCustom = true">自定义动作</button>
-          </div>
-          <div v-else class="custom-area">
-            <input v-model="customAction" class="text-input" placeholder="输入动作名称..." />
-            <button class="btn btn-ghost btn-sm chip-toggle" @click="useCustom = false">使用预设</button>
+            <div v-else class="rec-group-title">
+              <span>✏️</span>
+              <span>自定义</span>
+            </div>
+
+            <div v-if="g === 'custom'" class="custom-area">
+              <input v-model="customAction" class="text-input" placeholder="输入动作名称..." @keyup.enter="useCustom = true; submitRecord()" />
+            </div>
+            <div v-else class="chip-group">
+              <button
+                v-for="ex in exerciseStore.getExercisesByGroup(g)"
+                :key="ex.name"
+                :class="['chip', { on: formAction === ex.name }]"
+                @click="formAction = ex.name; useCustom = false"
+              >{{ ex.name }}<span v-if="'id' in ex && (ex as any).id" class="rec-chip-tag">自</span></button>
+            </div>
           </div>
         </div>
 
@@ -274,6 +266,12 @@ function goToday() {
 
 .action-chips { display: flex; flex-direction: column; gap: 6px; }
 .chip-group { display: flex; flex-wrap: wrap; gap: 8px; }
+
+/* 按分组展示 */
+.rec-group { margin-bottom: 12px; }
+.rec-group-title { font-size: 12px; font-weight: 600; color: var(--color-text-secondary); margin-bottom: 6px; display: flex; align-items: center; gap: 4px; }
+.rec-chip-tag { font-size: 9px; background: var(--color-accent); color: #fff; padding: 1px 4px; border-radius: 4px; margin-left: 3px; font-weight: 700; vertical-align: middle; }
+
 .chip { padding: 8px 16px; border: 1.5px solid var(--color-border); border-radius: 20px; background: var(--color-bg);
   font-size: 14px; font-weight: 500; cursor: pointer; transition: all var(--duration-fast) var(--ease-out); }
 .chip:active { transform: scale(0.95); }

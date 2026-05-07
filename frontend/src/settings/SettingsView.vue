@@ -8,6 +8,9 @@ import { MUSCLE_GROUPS, MUSCLE_GROUP_LABELS } from '../shared/exercises'
 import type { MuscleGroup } from '../shared/exercises'
 import { ref } from 'vue'
 
+/** 动作库管理需要的全部分组（含 cardio） */
+const ALL_EXERCISE_GROUPS: MuscleGroup[] = [...MUSCLE_GROUPS, 'cardio']
+
 const settingsStore = useSettings()
 const goalStore = useGoal()
 const exerciseStore = useExercise()
@@ -205,7 +208,7 @@ function confirmRemove(id: string) {
           <div class="form-field">
             <div class="label">部位</div>
             <div class="lib-group-chips">
-              <button v-for="mg in MUSCLE_GROUPS" :key="mg"
+              <button v-for="mg in ALL_EXERCISE_GROUPS" :key="mg"
                 :class="['chip', { 'chip-active': libFormGroup === mg }]"
                 @click="libFormGroup = mg"
               >{{ MUSCLE_GROUP_LABELS[mg] }}</button>
