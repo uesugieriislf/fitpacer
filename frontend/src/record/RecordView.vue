@@ -19,6 +19,16 @@ const formReps = ref(10)
 const formRpe = ref(5)
 const formNote = ref('')
 const customAction = ref('')
+// 有氧专用字段
+const cardioDuration = ref(30)
+const cardioHeartRate = ref<number | undefined>(undefined)
+
+// 判断选中动作是否为有氧
+const selectedIsCardio = computed(() => {
+  if (!formAction.value) return false
+  const all = exerciseStore.getExercisesByGroup('cardio')
+  return all.some(e => e.name === formAction.value)
+})
 
 const dateStr = computed(() => recordStore.selectedDate)
 const dateObj = computed(() => new Date(dateStr.value + 'T00:00:00'))
@@ -38,24 +48,41 @@ const ALL_GROUPS: (MuscleGroup | 'custom')[] = [...MUSCLE_GROUPS, 'cardio', 'cus
 function openForm() {
   formAction.value = ''
   formSets.value = 3
-  formReps.value = planType.value === 'cardio' ? 1 : 10
+  formReps.value = 10
   formRpe.value = 5
   formNote.value = ''
   customAction.value = ''
+  cardioDuration.value = 30
+  cardioHeartRate.value = undefined
   showForm.value = true
 }
 
 function submitRecord() {
   const action = formAction.value || customAction.value.trim()
   if (!action) return
-  recordStore.createRecord({
-    date: recordStore.selectedDate,
-    action,
-    sets: formSets.value,
-    reps: formReps.value,
-    rpe: formRpe.value,
-    note: formNote.value
-  })
+
+  if (selectedIsCardio.value) {
+    // 有氧：时长=reps，组数固定1
+    recordStore.createRecord({
+      date: recordStore.selectedDate,
+      action,
+      sets: 1,
+      reps: cardioDuration.value,
+      rpe: 7,
+      note: cardioHeartRate.value
+        ? `❤️ ${cardioHeartRate.value} bpm` + (formNote.value ? ' · ' + formNote.value : '')
+        : formNote.value
+    })
+  } else {
+    recordStore.createRecord({
+      date: recordStore.selectedDate,
+      action,
+      sets: formSets.value,
+      reps: formReps.value,
+      rpe: formRpe.value,
+      note: formNote.value
+    })
+  }
   showForm.value = false
 }
 
@@ -75,6 +102,12 @@ function isToday(d: string): boolean {
 
 function goToday() {
   recordStore.selectDate(fmtLocalDate(new Date()))
+}
+
+/** 检查某条记录是否为有氧记录 */
+function isCardioRecord(action: string): boolean {
+  const all = exerciseStore.getExercisesByGroup('cardio')
+  return all.some(e => e.name === action)
 }
 </script>
 
@@ -125,10 +158,17 @@ function goToday() {
           <button class="btn btn-ghost rec-del" @click="recordStore.removeRecord(rec.id)">✕</button>
         </div>
         <div class="rec-meta">
-          <span>{{ rec.sets }} 组 × {{ rec.reps }} 次</span>
-          <span class="rec-rpe">RPE {{ rec.rpe }}</span>
+          <template v-if="isCardioRecord(rec.action)">
+            <span>🕐 {{ rec.reps }} 分钟</span>
+            <span v-if="rec.note?.startsWith('❤️')" class="rec-hr">{{ rec.note.split('❤️')[1]?.split(' ·')[0]?.trim() }} bpm</span>
+          </template>
+          <template v-else>
+            <span>{{ rec.sets }} 组 × {{ rec.reps }} 次</span>
+            <span class="rec-rpe">RPE {{ rec.rpe }}</span>
+          </template>
         </div>
-        <div class="rec-note" v-if="rec.note">{{ rec.note }}</div>
+        <div class="rec-note" v-if="rec.note && !rec.note.startsWith('❤️')">{{ rec.note }}</div>
+        <div class="rec-note" v-else-if="rec.note?.startsWith('❤️') && rec.note.includes('·')">{{ rec.note.split(' · ')[1] }}</div>
       </div>
     </div>
 
@@ -166,30 +206,57 @@ function goToday() {
           </div>
         </div>
 
-        <div class="form-row">
+        <!-- 有氧专用：时长 + 心率 -->
+        <template v-if="selectedIsCardio">
           <div class="form-field">
-            <div class="label">组数</div>
-            <div class="stepper">
-              <button class="btn btn-sm" @click="formSets = Math.max(1, formSets - 1)">−</button>
-              <span class="stepper-val">{{ formSets }}</span>
-              <button class="btn btn-sm" @click="formSets = Math.min(10, formSets + 1)">+</button>
+            <div class="label">运动时长</div>
+            <div class="stepper-row">
+              <button class="btn btn-ghost btn-sm" @click="cardioDuration = Math.max(5, cardioDuration - 5)">−</button>
+              <span class="stepper-value">{{ cardioDuration }} 分钟</span>
+              <button class="btn btn-ghost btn-sm" @click="cardioDuration = Math.min(180, cardioDuration + 5)">+</button>
+            </div>
+            <div class="duration-quick">
+              <button v-for="d in [15, 20, 30, 40, 60]" :key="d"
+                :class="['chip chip-sm', { 'chip-active': cardioDuration === d }]"
+                @click="cardioDuration = d">{{ d }}分钟</button>
             </div>
           </div>
           <div class="form-field">
-            <div class="label">次数</div>
-            <div class="stepper">
-              <button class="btn btn-sm" @click="formReps = Math.max(1, formReps - 1)">−</button>
-              <span class="stepper-val">{{ formReps }}</span>
-              <button class="btn btn-sm" @click="formReps = Math.min(50, formReps + 1)">+</button>
+            <div class="label">平均心率 <span class="label-optional">（可选）</span></div>
+            <div class="stepper-row">
+              <button class="btn btn-ghost btn-sm" @click="cardioHeartRate = (cardioHeartRate || 120) > 60 ? (cardioHeartRate || 120) - 5 : 60">−</button>
+              <span class="stepper-value">{{ cardioHeartRate ? cardioHeartRate + ' bpm' : '未设置' }}</span>
+              <button class="btn btn-ghost btn-sm" @click="cardioHeartRate = Math.min(220, (cardioHeartRate || 120) + 5)">+</button>
             </div>
           </div>
-        </div>
+        </template>
 
-        <div class="form-field">
-          <div class="label">RPE {{ formRpe }} — {{ rpeLabels[formRpe] ?? '' }}</div>
-          <input type="range" min="1" max="10" v-model.number="formRpe" class="slider" />
-          <div class="rpe-marks"><span>极轻</span><span>中等</span><span>极限</span></div>
-        </div>
+        <!-- 力量专用：组数 + 次数 + RPE -->
+        <template v-else>
+          <div class="form-row">
+            <div class="form-field">
+              <div class="label">组数</div>
+              <div class="stepper">
+                <button class="btn btn-sm" @click="formSets = Math.max(1, formSets - 1)">−</button>
+                <span class="stepper-val">{{ formSets }}</span>
+                <button class="btn btn-sm" @click="formSets = Math.min(10, formSets + 1)">+</button>
+              </div>
+            </div>
+            <div class="form-field">
+              <div class="label">次数</div>
+              <div class="stepper">
+                <button class="btn btn-sm" @click="formReps = Math.max(1, formReps - 1)">−</button>
+                <span class="stepper-val">{{ formReps }}</span>
+                <button class="btn btn-sm" @click="formReps = Math.min(50, formReps + 1)">+</button>
+              </div>
+            </div>
+          </div>
+          <div class="form-field">
+            <div class="label">RPE {{ formRpe }} — {{ rpeLabels[formRpe] ?? '' }}</div>
+            <input type="range" min="1" max="10" v-model.number="formRpe" class="slider" />
+            <div class="rpe-marks"><span>极轻</span><span>中等</span><span>极限</span></div>
+          </div>
+        </template>
 
         <div class="form-field">
           <div class="label">备注</div>
@@ -237,6 +304,7 @@ function goToday() {
 .rec-del { font-size: 16px; color: var(--color-text-tertiary); padding: 2px 6px; }
 .rec-meta { display: flex; gap: 18px; font-size: 14px; color: var(--color-text-secondary); }
 .rec-rpe { color: var(--color-primary); font-weight: 600; }
+.rec-hr { background: var(--color-cardio-bg); color: var(--color-cardio); padding: 2px 8px; border-radius: 8px; font-size: 12px; font-weight: 600; }
 .rec-note { margin-top: 6px; font-size: 13px; color: var(--color-text-secondary); font-style: italic; }
 
 /* 悬浮添加按钮 */
@@ -255,6 +323,14 @@ function goToday() {
 .form-field { margin-bottom: 18px; }
 .form-row { display: flex; gap: 14px; }
 .form-row .form-field { flex: 1; }
+.label-optional { font-weight: 400; color: var(--color-text-tertiary); font-size: 12px; }
+
+/* 有氧表单样式（复用计划页） */
+.stepper-row { display: flex; align-items: center; justify-content: center; gap: 16px; padding: 8px 0; }
+.stepper-value { font-size: 20px; font-weight: 650; min-width: 90px; text-align: center; }
+.duration-quick { display: flex; gap: 6px; justify-content: center; margin-top: 8px; }
+.chip-sm { padding: 5px 10px; font-size: 12px; }
+.chip-active { border-color: var(--color-primary); background: var(--color-primary-bg); color: var(--color-primary); font-weight: 600; }
 
 .action-chips { display: flex; flex-direction: column; gap: 6px; }
 
