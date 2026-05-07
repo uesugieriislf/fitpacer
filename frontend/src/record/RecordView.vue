@@ -2,11 +2,14 @@
 import { ref, computed } from 'vue'
 import { useRecord } from './useRecord'
 import { usePlan } from '../plan/usePlan'
-import { weekdayLabels, strengthExercises, cardioExercises, rpeLabels, getTypeIcon, getTypeLabel } from '../shared/icons'
+import { useExercise } from '../exercise/useExercise'
+import { weekdayLabels, cardioExercises, rpeLabels } from '../shared/icons'
+import { MUSCLE_GROUPS } from '../shared/exercises'
 import type { TrainingType } from '../plan/storage'
 
 const recordStore = useRecord()
 const planStore = usePlan()
+const exerciseStore = useExercise()
 
 const showForm = ref(false)
 const formAction = ref('')
@@ -29,11 +32,28 @@ const planType = computed<TrainingType | null>(() =>
   planDay.value?.type ?? null
 )
 
-// 根据计划类型推荐的动作列表
+// 根据计划类型推荐的动作列表（使用动作库 + 有氧预设）
 const suggestedExercises = computed(() => {
-  if (planType.value === 'strength') return strengthExercises
+  if (planType.value === 'strength') {
+    // 从动作库取所有力量动作（内置+自定义），去重后扁平为名称列表
+    const names = new Set<string>()
+    for (const mg of MUSCLE_GROUPS) {
+      for (const ex of exerciseStore.getExercisesByGroup(mg)) {
+        names.add(ex.name)
+      }
+    }
+    return [...names]
+  }
   if (planType.value === 'cardio') return cardioExercises
-  return [...strengthExercises, ...cardioExercises]
+  // 休息日：力量 + 有氧
+  const all = new Set<string>()
+  for (const mg of MUSCLE_GROUPS) {
+    for (const ex of exerciseStore.getExercisesByGroup(mg)) {
+      all.add(ex.name)
+    }
+  }
+  cardioExercises.forEach(e => all.add(e))
+  return [...all]
 })
 
 function openForm() {
