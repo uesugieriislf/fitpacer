@@ -288,6 +288,23 @@ function completionPct(day: DayPlan): number {
   return Math.round((day.exercises.filter(e => e.completed).length / day.exercises.length) * 100)
 }
 
+/** 按部位统计完成情况 */
+function mgCompletion(day: DayPlan) {
+  const stats: Record<MuscleGroup, { total: number; done: number }> = {
+    chest: { total: 0, done: 0 },
+    shoulders_back: { total: 0, done: 0 },
+    legs: { total: 0, done: 0 }
+  }
+  day.exercises.forEach(ex => {
+    const mg = ex.muscleGroup
+    if (mg && MUSCLE_GROUPS.includes(mg)) {
+      stats[mg].total++
+      if (ex.completed) stats[mg].done++
+    }
+  })
+  return stats
+}
+
 /** 有氧进度 */
 const cardioTarget = computed(() => settingsStore.settings.cardioTargetMinutes)
 const cardioPct = computed(() => Math.min(100, Math.round((store.weekCardioMinutes / cardioTarget.value) * 100)))
@@ -417,28 +434,33 @@ const todayDone = computed(() => {
           <span class="cardio-stat" v-if="day.cardioRecord.action">{{ day.cardioRecord.action }}</span>
         </div>
 
-        <!-- 已展开：动作清单 -->
-        <div class="exercise-list" v-if="isExpanded(day.date) && day.exercises && day.exercises.length > 0">
-          <div class="exercise-progress" v-if="day.type === 'strength'">
+        <!-- 已展开：按部位展示完成情况 + 热身放松 -->
+        <div class="exercise-list" v-if="isExpanded(day.date) && day.type === 'strength'">
+          <div class="exercise-progress">
             <div class="progress-bar-mini">
               <div class="progress-fill-mini" :style="{ width: completionPct(day) + '%' }"></div>
             </div>
             <span class="progress-label">{{ completionPct(day) }}%</span>
           </div>
-          <div
-            v-for="(ex, ei) in day.exercises"
-            :key="ei"
-            :class="['exercise-item', {
-              'exercise-done': ex.completed,
-              'exercise-neglected': !ex.completed && isNeglected(ex.name) && !day.completed
-            }]"
-          >
-            <span :class="['ex-check', ex.completed ? 'ex-checked' : '']">
-              {{ ex.completed ? '✅' : '○' }}
+          <div v-for="mg in MUSCLE_GROUPS" :key="mg"
+            :class="['mg-summary-item', { 'mg-summary-done': mgCompletion(day)[mg].done > 0 }]">
+            <span class="mg-summary-icon">{{ MUSCLE_GROUP_ICONS[mg] }}</span>
+            <span class="mg-summary-label">{{ MUSCLE_GROUP_LABELS[mg] }}</span>
+            <span class="mg-summary-count">{{ mgCompletion(day)[mg].done }}/{{ mgCompletion(day)[mg].total }}</span>
+            <span class="mg-summary-badge" v-if="mgCompletion(day)[mg].total > 0">
+              {{ mgCompletion(day)[mg].done === mgCompletion(day)[mg].total ? '✅' : '⚠️' }}
             </span>
-            <span class="ex-name">{{ ex.name }}</span>
-            <span class="ex-prescription">{{ ex.prescription }}</span>
-            <span v-if="!ex.completed && isNeglected(ex.name) && !day.completed" class="ex-warn">⚠️</span>
+            <span class="mg-summary-badge" v-else>○</span>
+          </div>
+
+          <!-- 热身与放松 -->
+          <div :class="['mg-summary-item', { 'mg-summary-done': day.warmupDone || day.cooldownDone }]">
+            <span class="mg-summary-icon">🧘</span>
+            <span class="mg-summary-label">热身与放松</span>
+            <span class="mg-summary-count"></span>
+            <span class="mg-summary-badge">
+              {{ day.warmupDone && day.cooldownDone ? '✅' : day.warmupDone || day.cooldownDone ? '⚠️' : '○' }}
+            </span>
           </div>
         </div>
 
@@ -874,6 +896,46 @@ const todayDone = computed(() => {
 .ex-name { font-size: 13px; font-weight: 550; flex: 1; }
 .ex-prescription { font-size: 11px; color: var(--color-text-secondary); white-space: nowrap; }
 .ex-warn { font-size: 10px; color: var(--color-accent); font-weight: 600; margin-left: 4px; }
+
+/* 按部位摘要 */
+.mg-summary-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  margin-bottom: 4px;
+  border-radius: 8px;
+  background: var(--color-bg);
+  transition: all var(--duration-fast) var(--ease-out);
+}
+.mg-summary-done {
+  background: var(--color-primary-bg);
+}
+.mg-summary-icon {
+  font-size: 15px;
+  width: 24px;
+  text-align: center;
+  flex-shrink: 0;
+}
+.mg-summary-label {
+  font-size: 13px;
+  font-weight: 600;
+  flex: 1;
+}
+.mg-summary-count {
+  font-size: 11px;
+  color: var(--color-text-secondary);
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  min-width: 24px;
+  text-align: right;
+}
+.mg-summary-badge {
+  font-size: 14px;
+  width: 22px;
+  text-align: center;
+  flex-shrink: 0;
+}
 
 /* RPE 说明弹窗 */
 .rpe-tip-overlay {
