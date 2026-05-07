@@ -283,4 +283,15 @@ function confirmRemove(id: string) {
 .ex-del { color: var(--color-danger) !important; }
 .ex-lib-empty { padding: 20px 0; text-align: center; font-size: 13px; color: var(--color-text-secondary); }
 .lib-group-chips { display: flex; gap: 8px; }
+.lib-group-chips .chip {
+  flex: 1; padding: 10px 14px; border: 2px solid var(--color-border);
+  border-radius: var(--radius); background: var(--color-bg); color: var(--color-text);
+  font-size: 14px; font-weight: 600; cursor: pointer; text-align: center;
+  transition: all var(--duration-fast) var(--ease-out);
+}
+.lib-group-chips .chip:active { transform: scale(0.96); }
+.lib-group-chips .chip-active {
+  background: var(--color-primary); color: #fff; border-color: var(--color-primary);
+  box-shadow: 0 2px 8px rgba(0, 179, 101, 0.25);
+}
 </style>
