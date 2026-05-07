@@ -14,7 +14,7 @@ export const useDashboard = defineStore('dashboard', () => {
   function addBodyData(entry: Omit<BodyData, 'id' | 'createdAt'>) {
     const item: BodyData = {
       id: generateId(),
-      createdAt: new Date().toISOString().replace('T', 'T').slice(0, 19),
+      createdAt: (() => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}T${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}:${String(d.getSeconds()).padStart(2,'0')}` })(),
       ...entry
     }
     bodyData.value = [...bodyData.value, item]
