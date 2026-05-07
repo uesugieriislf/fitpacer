@@ -1,6 +1,6 @@
 // calendar/calendarEngine.test.ts — 单元测试
 
-import { describe, it, expect } from "vitest";
+import { describe, it, expect } from 'vite-plus/test';
 import { getMonthGrid, getDayStatus, getTodayStr } from "./calendarEngine";
 import type { DayPlan } from "../plan/storage";
 

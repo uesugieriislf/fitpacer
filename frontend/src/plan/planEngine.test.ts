@@ -130,9 +130,13 @@ describe('getAdjustOptions', () => {
     const opts = getAdjustOptions(plan, '2026-05-04')
     const adjusted = opts[2].apply(plan) // 重新对齐
     expect(adjusted[0].missed).toBe(true)
-    // 第一个后续力量日（周四）应变为补练
-    const thursday = adjusted[3] // 5/7 = 周四
-    expect(thursday.details).toContain('补练')
+    // 周一的力量训练移到周三（最近空档）
+    expect(adjusted[2].type).toBe('strength')
+    expect(adjusted[2].details).toContain('补练')
+    // 周四的力量训练顺延到周六（+3天找最近休息日）
+    expect(adjusted[3].type).toBe('rest')
+    expect(adjusted[5].type).toBe('strength')
+    expect(adjusted[5].details).toContain('补练')
   })
 
   it('不存在的日期返回空数组', () => {

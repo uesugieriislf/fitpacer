@@ -1,6 +1,6 @@
 // stats/statsEngine.test.ts — 单元测试
 
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect } from 'vite-plus/test'
 import { getPeriodReport, type PeriodUnit } from './statsEngine'
 import type { TrainingRecord } from '../record/storage'
 

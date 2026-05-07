@@ -280,17 +280,17 @@ function realignStrength(plan: DayPlan[], missedDate: string): DayPlan[] {
 
   let newPlan = moveToSlot(plan, missedDate, firstSlot)
 
-  // 找到后续所有力量日（未完成的）
+  // 找到后续所有力量日（未完成的）— 排除已移到 firstSlot 的补练日
   const strengthIndices: number[] = []
   for (let i = 0; i < newPlan.length; i++) {
-    if (newPlan[i].type === 'strength' && !newPlan[i].completed && newPlan[i].date >= missedDate) {
+    if (newPlan[i].type === 'strength' && !newPlan[i].completed && newPlan[i].date > firstSlot) {
       strengthIndices.push(i)
     }
   }
 
   // 顺延后续力量日：每个力量日向后推到下一个 rest 日（至少隔一天）
   for (let si = 0; si < strengthIndices.length; si++) {
-    const prevDate = strengthIndices[si] === 0
+    const prevDate = si === 0
       ? firstSlot
       : newPlan[strengthIndices[si - 1]].date
 
