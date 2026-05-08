@@ -43,7 +43,8 @@ export default defineComponent({
     const strengthForm = ref<Record<MuscleGroup, ExerciseFormItem[]>>({
       chest: [],
       shoulders_back: [],
-      legs: []
+      legs: [],
+      cardio: [],
     })
 
     const strengthWarmup = ref(false)
@@ -52,7 +53,8 @@ export default defineComponent({
     const customName = ref<Record<MuscleGroup, string>>({
       chest: '',
       shoulders_back: '',
-      legs: ''
+      legs: '',
+      cardio: '',
     })
 
     const expandedGroups = ref<Set<MuscleGroup>>(new Set(['chest', 'shoulders_back', 'legs']))

@@ -1,8 +1,8 @@
-import { onMounted, computed, ref, watch, defineComponent, Teleport } from 'vue'
+import { onMounted, computed, ref, defineComponent, Teleport } from 'vue'
 import './PlanView.css'
 import { usePlan } from './usePlan'
 import { useSettings } from '../settings/useSettings'
-import { getTypeIcon, getTypeLabel, weekdayLabels } from '../shared/icons'
+import { getTypeLabel, weekdayLabels } from '../shared/icons'
 import { getAdjustOptions, findAvailableSlots } from './planEngine'
 import type { DayPlan } from './storage'
 import { MUSCLE_GROUPS, MUSCLE_GROUP_LABELS, MUSCLE_GROUP_ICONS, type MuscleGroup } from '../shared/exercises'
@@ -64,9 +64,6 @@ export default defineComponent({
       return getAdjustOptions(plan, date)
     }
 
-    function isNeglected(name: string): boolean {
-      return store.neglectedExercises.has(name)
-    }
 
     // 手动选日期推迟
     const showDatePicker = ref(false)
@@ -98,10 +95,11 @@ export default defineComponent({
       const stats: Record<MuscleGroup, { total: number; done: number }> = {
         chest: { total: 0, done: 0 },
         shoulders_back: { total: 0, done: 0 },
-        legs: { total: 0, done: 0 }
+        legs: { total: 0, done: 0 },
+        cardio: { total: 0, done: 0 },
       }
-      day.exercises.forEach(ex => {
-        const mg = ex.muscleGroup
+      day.exercises.forEach((ex: any) => {
+        const mg = ex.muscleGroup as MuscleGroup | undefined
         if (mg && MUSCLE_GROUPS.includes(mg)) {
           stats[mg].total++
           if (ex.completed) stats[mg].done++
