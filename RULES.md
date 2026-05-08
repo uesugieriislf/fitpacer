@@ -156,6 +156,7 @@ export default defineComponent({
 - **Emits 必须声明** — 在 `emits: { ... }` 中声明事件及参数类型，保持输出接口清晰
 - **最小组件（无 props/emits）** — 直接用 `defineComponent(() => { return () => ... })` 省略 props 声明
 - **无 props 参数用 `_`** — 如 `setup(_, { emit })` 防止 TS 未使用变量报错
+- **响应式统一用 `ref` 不用 `reactive`** — TSX 中没有自动解包，所有响应式数据统一 `.value` 访问，心智模型单一。开发者不需要判断"这是基础类型还是对象"，一律 `ref`
 - v-model — 照用，其本质就是 props + emits 语法糖
 
 ### 铁律：禁止解构
