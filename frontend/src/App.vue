@@ -2,9 +2,9 @@
 import { ref, computed } from 'vue'
 import { navItems, type NavKey } from './shared/icons'
 import PlanView from './plan/PlanView'
-import RecordView from './record/RecordView.vue'
+import RecordView from './record/RecordView'
 import DashboardView from './dashboard/DashboardView.vue'
-import SettingsView from './settings/SettingsView.vue'
+import SettingsView from './settings/SettingsView'
 
 const activeTab = ref<NavKey>('plan')
 const transitioning = ref(false)

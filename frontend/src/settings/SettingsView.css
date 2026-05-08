@@ -1,0 +1,58 @@
+.settings-view .section-title-row { display: flex; align-items: center; gap: 8px; margin-bottom: 2px; }
+
+.settings-view .form-field { margin-bottom: 18px; }
+.settings-view .form-row { display: flex; gap: 12px; }
+.settings-view .form-row .form-field { flex: 1; }
+.settings-view .input-with-unit { position: relative; }
+.settings-view .input-with-unit .text-input { padding-right: 40px; }
+.settings-view .unit { position: absolute; right: 14px; top: 50%; transform: translateY(-50%);
+  font-size: 13px; color: var(--color-text-secondary); pointer-events: none; font-weight: 500; }
+
+.settings-view .preview-card { margin-top: 8px; }
+.settings-view .preview-row { display: flex; justify-content: space-between; padding: 5px 0; font-size: 14px; }
+.settings-view .preview-row + .preview-row { border-top: 1px solid var(--color-border-light); }
+.settings-view .preview-val { font-weight: 600; }
+.settings-view .remaining { color: var(--color-accent); }
+
+.settings-view .day-toggles { display: flex; gap: 6px; flex-wrap: wrap; }
+.settings-view .day-toggle { flex: 1; min-width: 44px; padding: 10px 8px; border: 2px solid var(--color-border);
+  border-radius: var(--radius); background: var(--color-bg); color: var(--color-text);
+  font-size: 13px; font-weight: 600; cursor: pointer; transition: all var(--duration-fast) var(--ease-out); text-align: center; }
+.settings-view .day-toggle:active { transform: scale(0.95); }
+.settings-view .day-toggle.on { background: var(--color-primary); color: #fff; border-color: var(--color-primary);
+  box-shadow: 0 2px 8px rgba(43,162,69,0.25); }
+
+.settings-view .time-row { max-width: 200px; }
+.settings-view .time-input { font-size: 15px; }
+
+.settings-view .theme-row { display: flex; gap: 8px; }
+
+.settings-view .apply-btn { width: 100%; padding: 16px; font-size: 15px; border-radius: var(--radius); }
+
+.settings-view .about { opacity: 0.5; padding-top: 16px; border-top: 1px solid var(--color-border-light); }
+.settings-view .about p { font-size: 13px; color: var(--color-text-secondary); }
+.settings-view .version { margin-top: 4px; font-size: 12px !important; }
+
+/* 动作库管理 */
+.settings-view .section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; }
+.settings-view .ex-lib-list { display: flex; flex-direction: column; gap: 6px; margin-top: 10px; }
+.settings-view .ex-lib-item { display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; }
+.settings-view .ex-lib-info { display: flex; flex-direction: column; gap: 2px; }
+.settings-view .ex-lib-name { font-size: 14px; font-weight: 600; }
+.settings-view .ex-lib-meta { font-size: 11px; color: var(--color-text-secondary); }
+.settings-view .ex-lib-actions { display: flex; gap: 4px; }
+.settings-view .btn-xs { font-size: 11px; padding: 3px 8px; }
+.settings-view .ex-del { color: var(--color-danger) !important; }
+.settings-view .ex-lib-empty { padding: 20px 0; text-align: center; font-size: 13px; color: var(--color-text-secondary); }
+.settings-view .lib-group-chips { display: flex; gap: 8px; }
+.settings-view .lib-group-chips .chip {
+  flex: 1; padding: 10px 14px; border: 2px solid var(--color-border);
+  border-radius: var(--radius); background: var(--color-bg); color: var(--color-text);
+  font-size: 14px; font-weight: 600; cursor: pointer; text-align: center;
+  transition: all var(--duration-fast) var(--ease-out);
+}
+.settings-view .lib-group-chips .chip:active { transform: scale(0.96); }
+.settings-view .lib-group-chips .chip-active {
+  background: var(--color-primary); color: #fff; border-color: var(--color-primary);
+  box-shadow: 0 2px 8px rgba(0, 179, 101, 0.25);
+}
