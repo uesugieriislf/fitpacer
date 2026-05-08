@@ -1,10 +1,11 @@
-.stats-panel .stats-card {
+.stats-panel {
+.stats-card {
   padding: 18px;
   animation: slideUp 0.35s var(--ease-out);
 }
 
 /* 维度切换 */
-.stats-panel .st-dimension {
+.st-dimension {
   display: flex;
   gap: 4px;
   background: var(--color-bg);
@@ -13,7 +14,7 @@
   margin-bottom: 14px;
 }
 
-.stats-panel .st-dim-btn {
+.st-dim-btn {
   flex: 1;
   border: none;
   background: transparent;
@@ -26,14 +27,14 @@
   transition: all var(--duration-fast) var(--ease-out);
 }
 
-.stats-panel .st-dim-active {
+.st-dim-active {
   background: var(--color-surface);
   color: var(--color-text);
   box-shadow: var(--shadow-xs);
 }
 
 /* 时段导航 */
-.stats-panel .st-nav {
+.st-nav {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -41,7 +42,7 @@
   margin-bottom: 16px;
 }
 
-.stats-panel .st-nav-btn {
+.st-nav-btn {
   background: transparent;
   border: none;
   font-size: 22px;
@@ -58,12 +59,12 @@
   line-height: 1;
 }
 
-.stats-panel .st-nav-btn:active {
+.st-nav-btn:active {
   background: var(--color-surface-hover);
   transform: scale(0.9);
 }
 
-.stats-panel .st-nav-title {
+.st-nav-title {
   background: transparent;
   border: none;
   font-size: 15px;
@@ -76,12 +77,12 @@
   letter-spacing: -0.2px;
 }
 
-.stats-panel .st-nav-title:active {
+.st-nav-title:active {
   background: var(--color-surface-hover);
 }
 
 /* 概要 */
-.stats-panel .st-summary {
+.st-summary {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -92,7 +93,7 @@
   border-radius: var(--radius-sm);
 }
 
-.stats-panel .st-summary-item {
+.st-summary-item {
   flex: 1;
   text-align: center;
   display: flex;
@@ -100,27 +101,27 @@
   gap: 2px;
 }
 
-.stats-panel .st-summary-num {
+.st-summary-num {
   font-size: 26px;
   font-weight: 800;
   color: var(--color-primary);
   font-variant-numeric: tabular-nums;
 }
 
-.stats-panel .st-summary-label {
+.st-summary-label {
   font-size: 11px;
   color: var(--color-text-secondary);
   font-weight: 600;
 }
 
-.stats-panel .st-summary-divider {
+.st-summary-divider {
   width: 1px;
   height: 36px;
   background: var(--color-border-light);
 }
 
 /* 空状态 */
-.stats-panel .st-empty {
+.st-empty {
   text-align: center;
   padding: 24px;
   color: var(--color-text-secondary);
@@ -128,13 +129,13 @@
 }
 
 /* 动作排名 */
-.stats-panel .st-exercise-list {
+.st-exercise-list {
   display: flex;
   flex-direction: column;
   gap: 6px;
 }
 
-.stats-panel .st-exercise-item {
+.st-exercise-item {
   display: flex;
   align-items: center;
   gap: 10px;
@@ -144,11 +145,11 @@
   transition: all var(--duration-fast) var(--ease-out);
 }
 
-.stats-panel .st-exercise-item:active {
+.st-exercise-item:active {
   transform: scale(0.98);
 }
 
-.stats-panel .st-ex-rank {
+.st-ex-rank {
   width: 20px;
   font-size: 14px;
   font-weight: 700;
@@ -156,23 +157,23 @@
   text-align: center;
 }
 
-.stats-panel .st-exercise-item:nth-child(1) .st-ex-rank { color: var(--color-primary); }
-.stats-panel .st-exercise-item:nth-child(2) .st-ex-rank { color: var(--color-cardio); }
-.stats-panel .st-exercise-item:nth-child(3) .st-ex-rank { color: var(--color-strength); }
+.st-exercise-item:nth-child(1) .st-ex-rank { color: var(--color-primary); }
+.st-exercise-item:nth-child(2) .st-ex-rank { color: var(--color-cardio); }
+.st-exercise-item:nth-child(3) .st-ex-rank { color: var(--color-strength); }
 
-.stats-panel .st-ex-info {
+.st-ex-info {
   flex: 1;
   min-width: 0;
 }
 
-.stats-panel .st-ex-name {
+.st-ex-name {
   font-size: 14px;
   font-weight: 600;
   color: var(--color-text);
   display: block;
 }
 
-.stats-panel .st-ex-meta {
+.st-ex-meta {
   font-size: 11px;
   color: var(--color-text-secondary);
   margin-top: 1px;
@@ -181,12 +182,12 @@
   align-items: center;
 }
 
-.stats-panel .st-ex-dot {
+.st-ex-dot {
   color: var(--color-text-tertiary);
 }
 
 /* 迷你柱状条 */
-.stats-panel .st-ex-bar-wrap {
+.st-ex-bar-wrap {
   width: 50px;
   height: 4px;
   border-radius: 2px;
@@ -195,10 +196,12 @@
   flex-shrink: 0;
 }
 
-.stats-panel .st-ex-bar {
+.st-ex-bar {
   height: 100%;
   background: var(--color-primary-gradient);
   border-radius: 2px;
   transition: width var(--duration) var(--ease-out);
   min-width: 0;
+}
+
 }

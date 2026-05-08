@@ -1,37 +1,38 @@
-.record-view .date-nav { display: flex; align-items: center; justify-content: center; gap: 16px; margin-bottom: 16px; }
-.record-view .date-arrow { font-size: 28px; font-weight: 300; color: var(--color-text); padding: 4px 12px; }
-.record-view .date-display { display: flex; align-items: center; gap: 10px; min-width: 130px; justify-content: center; }
-.record-view .date-main { font-size: 24px; font-weight: 800; }
-.record-view .date-wd { font-size: 14px; color: var(--color-text-secondary); }
-.record-view .today-tag { background: var(--color-primary-gradient); color: #fff; padding: 2px 10px; border-radius: 10px;
+.record-view {
+.date-nav { display: flex; align-items: center; justify-content: center; gap: 16px; margin-bottom: 16px; }
+.date-arrow { font-size: 28px; font-weight: 300; color: var(--color-text); padding: 4px 12px; }
+.date-display { display: flex; align-items: center; gap: 10px; min-width: 130px; justify-content: center; }
+.date-main { font-size: 24px; font-weight: 800; }
+.date-wd { font-size: 14px; color: var(--color-text-secondary); }
+.today-tag { background: var(--color-primary-gradient); color: #fff; padding: 2px 10px; border-radius: 10px;
   font-size: 11px; font-weight: 700; animation: bounceIn 0.4s var(--ease-bounce); }
-.record-view .today-jump { font-size: 11px; padding: 4px 10px; flex-shrink: 0; }
+.today-jump { font-size: 11px; padding: 4px 10px; flex-shrink: 0; }
 
 /* 计划提示 */
-.record-view .plan-hint {
+.plan-hint {
   display: flex; align-items: center; gap: 6px; padding: 8px 14px; margin-bottom: 16px;
   border-radius: var(--radius-sm);
   font-size: 13px; font-weight: 600;
   animation: fadeInUp 0.35s var(--ease-out);
 }
-.record-view .plan-hint-strength { background: var(--color-strength-bg); color: var(--color-strength); }
-.record-view .plan-hint-cardio { background: var(--color-cardio-bg); color: var(--color-cardio); }
-.record-view .plan-hint-rest { background: rgba(148, 163, 184, 0.08); color: var(--color-rest); }
+.plan-hint-strength { background: var(--color-strength-bg); color: var(--color-strength); }
+.plan-hint-cardio { background: var(--color-cardio-bg); color: var(--color-cardio); }
+.plan-hint-rest { background: rgba(148, 163, 184, 0.08); color: var(--color-rest); }
 
-.record-view .records-list { display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; }
+.records-list { display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; }
 
-.record-view .record-card { padding: 16px; transition: all var(--duration-fast) var(--ease-out); }
-.record-view .record-card:active { transform: scale(0.99); box-shadow: var(--shadow-xs); }
-.record-view .rec-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
-.record-view .rec-action { font-size: 16px; font-weight: 700; }
-.record-view .rec-del { font-size: 16px; color: var(--color-text-tertiary); padding: 2px 6px; }
-.record-view .rec-meta { display: flex; gap: 18px; font-size: 14px; color: var(--color-text-secondary); }
-.record-view .rec-rpe { color: var(--color-primary); font-weight: 600; }
-.record-view .rec-hr { background: var(--color-cardio-bg); color: var(--color-cardio); padding: 2px 8px; border-radius: 8px; font-size: 12px; font-weight: 600; }
-.record-view .rec-note { margin-top: 6px; font-size: 13px; color: var(--color-text-secondary); font-style: italic; }
+.record-card { padding: 16px; transition: all var(--duration-fast) var(--ease-out); }
+.record-card:active { transform: scale(0.99); box-shadow: var(--shadow-xs); }
+.rec-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+.rec-action { font-size: 16px; font-weight: 700; }
+.rec-del { font-size: 16px; color: var(--color-text-tertiary); padding: 2px 6px; }
+.rec-meta { display: flex; gap: 18px; font-size: 14px; color: var(--color-text-secondary); }
+.rec-rpe { color: var(--color-primary); font-weight: 600; }
+.rec-hr { background: var(--color-cardio-bg); color: var(--color-cardio); padding: 2px 8px; border-radius: 8px; font-size: 12px; font-weight: 600; }
+.rec-note { margin-top: 6px; font-size: 13px; color: var(--color-text-secondary); font-style: italic; }
 
 /* 悬浮添加按钮 */
-.record-view .fab {
+.fab {
   position: fixed; bottom: calc(var(--safe-bottom) + 80px); right: 20px; z-index: 20;
   width: 56px; height: 56px; border-radius: 50%;
   background: var(--color-primary-gradient); color: #fff;
@@ -41,30 +42,30 @@
   transition: all var(--duration-fast) var(--ease-out);
   animation: scaleInBounce 0.35s var(--ease-bounce);
 }
-.record-view .fab:active { transform: scale(0.9); box-shadow: 0 2px 12px rgba(0, 179, 101, 0.3); }
+.fab:active { transform: scale(0.9); box-shadow: 0 2px 12px rgba(0, 179, 101, 0.3); }
 
-.record-view .form-field { margin-bottom: 18px; }
-.record-view .form-row { display: flex; gap: 14px; }
-.record-view .form-row .form-field { flex: 1; }
-.record-view .label-optional { font-weight: 400; color: var(--color-text-tertiary); font-size: 12px; }
+.form-field { margin-bottom: 18px; }
+.form-row { display: flex; gap: 14px; }
+.form-row .form-field { flex: 1; }
+.label-optional { font-weight: 400; color: var(--color-text-tertiary); font-size: 12px; }
 
 /* 有氧表单样式（复用计划页） */
-.record-view .stepper-row { display: flex; align-items: center; justify-content: center; gap: 16px; padding: 8px 0; }
-.record-view .stepper-value { font-size: 20px; font-weight: 650; min-width: 90px; text-align: center; }
-.record-view .duration-quick { display: flex; gap: 6px; justify-content: center; margin-top: 8px; }
-.record-view .chip-sm { padding: 5px 10px; font-size: 12px; }
-.record-view .chip-active { border-color: var(--color-primary); background: var(--color-primary-bg); color: var(--color-primary); font-weight: 600; }
+.stepper-row { display: flex; align-items: center; justify-content: center; gap: 16px; padding: 8px 0; }
+.stepper-value { font-size: 20px; font-weight: 650; min-width: 90px; text-align: center; }
+.duration-quick { display: flex; gap: 6px; justify-content: center; margin-top: 8px; }
+.chip-sm { padding: 5px 10px; font-size: 12px; }
+.chip-active { border-color: var(--color-primary); background: var(--color-primary-bg); color: var(--color-primary); font-weight: 600; }
 
-.record-view .action-chips { display: flex; flex-direction: column; gap: 6px; }
+.action-chips { display: flex; flex-direction: column; gap: 6px; }
 
 /* 分组展示 — 参考计划页部位区块风格 */
-.record-view .rec-group {
+.rec-group {
   margin-bottom: 10px;
   border-radius: var(--radius-sm);
   overflow: hidden;
   background: var(--color-bg);
 }
-.record-view .rec-group-head {
+.rec-group-head {
   display: flex;
   align-items: center;
   gap: 6px;
@@ -73,15 +74,15 @@
   font-weight: 650;
   color: var(--color-text);
 }
-.record-view .rec-group-icon { font-size: 15px; width: 22px; text-align: center; }
-.record-view .rec-group-label { flex: 1; }
-.record-view .rec-chip-grid {
+.rec-group-icon { font-size: 15px; width: 22px; text-align: center; }
+.rec-group-label { flex: 1; }
+.rec-chip-grid {
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
   padding: 4px 12px 12px;
 }
-.record-view .rec-chip {
+.rec-chip {
   padding: 6px 12px;
   border: 1.5px solid var(--color-border);
   border-radius: 16px;
@@ -92,14 +93,14 @@
   cursor: pointer;
   transition: all var(--duration-fast) var(--ease-out);
 }
-.record-view .rec-chip:active { transform: scale(0.95); }
-.record-view .rec-chip-on {
+.rec-chip:active { transform: scale(0.95); }
+.rec-chip-on {
   border-color: var(--color-primary);
   background: var(--color-primary-bg);
   color: var(--color-primary);
   font-weight: 600;
 }
-.record-view .rec-chip-tag {
+.rec-chip-tag {
   font-size: 9px;
   background: var(--color-accent);
   color: #fff;
@@ -109,21 +110,23 @@
   font-weight: 700;
   vertical-align: middle;
 }
-.record-view .rec-custom-area {
+.rec-custom-area {
   padding: 4px 12px 12px;
 }
 
-.record-view .chip { padding: 8px 16px; border: 1.5px solid var(--color-border); border-radius: 20px; background: var(--color-bg);
+.chip { padding: 8px 16px; border: 1.5px solid var(--color-border); border-radius: 20px; background: var(--color-bg);
   font-size: 14px; font-weight: 500; cursor: pointer; transition: all var(--duration-fast) var(--ease-out); }
-.record-view .chip:active { transform: scale(0.95); }
-.record-view .chip.on { background: var(--color-primary-gradient); color: #fff; border-color: transparent;
+.chip:active { transform: scale(0.95); }
+.chip.on { background: var(--color-primary-gradient); color: #fff; border-color: transparent;
   box-shadow: var(--color-primary-glow); font-weight: 600; }
-.record-view .custom-area { display: flex; flex-direction: column; gap: 6px; }
+.custom-area { display: flex; flex-direction: column; gap: 6px; }
 
-.record-view .stepper { display: flex; align-items: center; gap: 8px; }
-.record-view .stepper-val { font-size: 22px; font-weight: 700; min-width: 32px; text-align: center; font-variant-numeric: tabular-nums; }
+.stepper { display: flex; align-items: center; gap: 8px; }
+.stepper-val { font-size: 22px; font-weight: 700; min-width: 32px; text-align: center; font-variant-numeric: tabular-nums; }
 
-.record-view .empty-state { text-align: center; padding: 40px 20px; animation: fadeInUp 0.4s var(--ease-out); }
-.record-view .empty-state .empty-icon { font-size: 48px; margin-bottom: 12px; display: block; animation: float 3s ease-in-out infinite; }
-.record-view .empty-state p { font-size: 14px; color: var(--color-text-secondary); }
-.record-view .hint { font-size: 12px !important; margin-top: 4px; opacity: 0.6; }
+.empty-state { text-align: center; padding: 40px 20px; animation: fadeInUp 0.4s var(--ease-out); }
+.empty-state .empty-icon { font-size: 48px; margin-bottom: 12px; display: block; animation: float 3s ease-in-out infinite; }
+.empty-state p { font-size: 14px; color: var(--color-text-secondary); }
+.hint { font-size: 12px !important; margin-top: 4px; opacity: 0.6; }
+
+}
