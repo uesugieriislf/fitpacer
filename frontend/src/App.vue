@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { navItems, type NavKey } from './shared/icons'
-import PlanView from './plan/PlanView.vue'
+import PlanView from './plan/PlanView'
 import RecordView from './record/RecordView.vue'
 import DashboardView from './dashboard/DashboardView.vue'
 import SettingsView from './settings/SettingsView.vue'
