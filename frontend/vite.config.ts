@@ -1,11 +1,17 @@
 import { defineConfig } from 'vite-plus'
 import vue from '@vitejs/plugin-vue'
+import vueJsx from '@vitejs/plugin-vue-jsx'
 import { VitePWA } from 'vite-plugin-pwa'
 
 export default defineConfig({
   base: '/fitpacer/',
+  define: {
+    // 禁用 Options API → 树摇掉 setup() 以外的 Vue 运行时代码
+    __VUE_OPTIONS_API__: 'false',
+  },
   plugins: [
     vue(),
+    vueJsx(),
     VitePWA({
       registerType: 'autoUpdate',
       manifest: {

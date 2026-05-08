@@ -39,6 +39,14 @@ fitpacer/
 ```
 frontend/src/
   plan/             ← 功能单元：训练计划
+    planEngine.ts       ← 纯函数引擎
+    usePlan.ts          ← Pinia store
+    PlanView.tsx        ← TSX 页面组件
+    PlanView.css        ← 组件样式（根 class 嵌套）
+    PlanCard.tsx        ← TSX 子组件
+    PlanCard.css        ← 子组件样式
+    storage.ts          ← 数据持久化
+    planEngine.test.ts  ← 同目录测试
   record/           ← 功能单元：训练记录
   dashboard/        ← 功能单元：数据看板
   settings/         ← 功能单元：设置
@@ -80,7 +88,7 @@ backend/src/
 第 3 步：消费接口（前端）
   frontend/src/post/api.ts       → type guard
   frontend/src/post/usePost.ts   → Pinia store
-  frontend/src/post/PostList.vue → 渲染
+  frontend/src/post/PostList.tsx → 渲染
 ```
 
 ## 技术选型
@@ -89,11 +97,94 @@ backend/src/
 |---|------|------|
 | 构建 | VP（Vite Plus） | 项目创建、测试、打包、运行全部通过 VP |
 | 包管理 | pnpm | 禁止使用 npm 或 yarn |
-| 前端框架 | Vue 3 + Composition API | script setup + defineStore |
+| 前端渲染 | **TSX**（JSX = JSX，拒绝 SFC 魔法语法） | 组件 = 纯函数，测试天然友好；利用 Vue 响应式 + Pinia，心智负担低于 React |
 | 前端 DI | Pinia（惰性全局单例容器） | 不是"状态管理"，是 DI 容器 |
 | 后端框架 | NestJS（Fastify 引擎） | 模块化架构 + Fastify 性能（预留） |
 | 校验体系 | Zod（仅后端） | Schema 驱动校验 + 类型 + 文档（预留） |
-| 单元测试 | Vitest（VP 内置） | 测试 useXxx.ts + 纯函数模块 |
+| 单元测试 | Vitest（VP 内置） | 测试 planEngine + useXxx.ts + TSX 组件渲染输出 |
+| 样式方案 | CSS 变量（app.css）+ 根 class 嵌套（组件级 .css） | 零依赖，原生 CSS Nesting，不需要 scoped |
+
+## 渲染规范
+
+### 核心原则
+
+> 去掉 SFC 魔法，保留 Vue 响应式 + 生态，用 TSX 补齐组件表达力。
+
+Vue 3 真正有价值的东西是 **Proxy 响应式系统**（ref/computed/watch）和 **官方生态**（Pinia、Vue Router）。
+SFC（`.vue` 三区段）是历史包袱 —— 自创语法导致 TS 支持差、工具链特殊适配、测试困难。
+改用 TSX 后，Vue 就相当于一个"没有 Hooks 心智负担的 React"，组件 = 函数，测试 = 测函数。
+
+### 组件写法
+
+```tsx
+// plan/PlanView.tsx
+import { usePlanStore } from './usePlan'
+import './PlanView.css'
+
+const PlanView = () => {
+  const planStore = usePlanStore()
+
+  return (
+    <div class="plan-view">
+      {planStore.plans.map(day => (
+        <div class="plan-view__day">{day.date}</div>
+      ))}
+    </div>
+  )
+}
+
+export default PlanView
+```
+
+- 组件是纯函数（或箭头函数）
+- Props 直接用函数参数，不需要 defineProps
+- 事件回调直接传函数 props（如 `onSelect`、`onToggle`）
+- Pinia 不解构（见依赖注入章节）
+
+### 样式约定
+
+```
+app.css         ← 全局 CSS 变量（设计系统），仅此一个
+PlanView.tsx    ← TSX 组件
+PlanView.css    ← 组件样式，根 class 作用域隔离
+```
+
+```css
+/* PlanView.css */
+.plan-view {
+  padding: 16px;
+
+  .plan-view__header { ... }
+  .plan-view__title { font-weight: 600; }
+  .plan-view__status { color: var(--text-secondary); }
+
+  .plan-view__card {
+    &--active { border-color: var(--color-primary); }
+  }
+}
+```
+
+- 每个组件一个同名的 `.css` 文件
+- 以组件名（kebab-case 版本）作为根 class
+- 所有子选择器嵌套在根 class 下，天然隔离
+- 使用**原生 CSS Nesting**（现代浏览器已支持），零依赖
+- 全局样式（字体、动画 keyframe、工具类）放在 `app.css`
+
+### 编译开关
+
+```ts
+// vite.config.ts — Options API 被树摇掉，不从 .vue 引入
+define: { __VUE_OPTIONS_API__: 'false' }
+```
+
+此开关告诉 Vue 运行时：你的代码中不会出现 `{ data() { ... } }` / `{ methods: { ... } }` 这种 Options API 写法，
+所以 Options API 相关代码（`applyOptions`、`mixin`、`extends`、组件选项规范化等）会被打包器树摇掉，减小包体积。
+
+### 存量的 .vue 文件
+
+- 已存在的 `.vue` 文件保留不动，不主动迁移
+- 新组件一律写 `.tsx`
+- 若某个 `.vue` 需要大幅改动，可考虑顺便重写为 `.tsx`，但非必须
 
 ## 依赖注入
 
@@ -112,6 +203,21 @@ export const usePlan = defineStore('plan', () => {
 - 第一次调用 `usePlan()` 时才执行 setup（惰性初始化）
 - 后续调用返回同一个实例（全局单例）
 - 通过 Pinia DevTools 调试
+
+### 铁律：禁止解构 Pinia store
+
+```typescript
+// ❌ 严禁 — 变成"不知道这个变量从哪里来"
+const { plan, addPlan } = storeToRefs(usePlanStore())
+
+// ✅ 必须 — 来源显式化
+const planStore = usePlanStore()
+planStore.plan
+planStore.addPlan()
+```
+
+解构让变量来源模糊化，回到 Vuex `mapGetters` 那种"全局变量不知道哪来的"老路。
+不解构是保持代码可读性和可追踪性的最简单手段。
 
 ### 后端：NestJS @Injectable（预留）
 
@@ -137,7 +243,9 @@ export class PostService { ... }
 | 文件类型 | 命名方式 | 示例 |
 |---------|---------|------|
 | 前端创建函数 | `useXxx.ts` | `usePlan.ts` |
-| 前端组件 | `PascalCase.vue` | `PlanView.vue` |
+| 前端 TSX 组件 | `PascalCase.tsx` | `PlanView.tsx`（新代码统一用 TSX） |
+| 前端 .vue 组件 | `PascalCase.vue` | 存量保留，新代码不再创建 |
+| 前端组件样式 | `PascalCase.css` | `PlanView.css`（与 TSX 组件同目录） |
 | 引擎/纯函数 | `xxxEngine.ts` | `planEngine.ts` |
 | 存储层 | `storage.ts` | 在各功能目录下 |
 | 后端 Controller | `xxx.controller.ts` | `post.controller.ts`（预留） |
@@ -160,7 +268,8 @@ export class PostService { ... }
 | P0 | **纯函数模块** | 无依赖，最好测（planEngine, calendarEngine, statsEngine） |
 | P0 | **storage.ts** | 数据持久化正确性 |
 | P1 | **useXxx.ts（Pinia store）** | 业务逻辑核心，需 mock localStorage |
-| P2 | **.vue 组件** | 组件是薄层，简单渲染即可 |
+| P1 | **.tsx 组件** | 组件 = 纯函数，直接传 props 测试渲染输出，不再挂载 .vue |
+| P2 | **.vue 组件（存量）** | 存量 SFC 保留，新代码不写 .vue |
 
 ### 开发流程
 
@@ -202,5 +311,7 @@ export class PostService { ... }
 | 2026-05-05 | correction | RULES.md 必须明确写入"每次任务后提交"规则，不能只靠口头约定 | #1 |
 | 2026-05-07 | bug | `new Date().toISOString()` 返回 UTC 时间！东八区晚上 22:14 会变成 14:14。永远用本地 getters（getHours/getMinutes）拼接时间戳，不要用 toISOString 存基于时间的信息 | #4 |
 | 2026-05-07 | correction | **需要用户决策的内容（方案选择、选项对比等）必须写在可见的回复正文中，不能放在 thinking 推理块里**。thinking 是内部推理空间，用户看不到默认折叠内容。放进去等于没放 | #4 |
+| 2026-05-08 | pattern | **全面切 TSX，废弃 SFC**。新组件一律写 `.tsx`，样式用同目录 `.css` + 根 class 嵌套隔离。Options API 通过 `__VUE_OPTIONS_API__: false` 树摇掉。Pinia 禁止解构 | #6 |
+| 2026-05-08 | correction | **Pinia 禁止 `storeToRefs` 解构**。不解构才能让变量来源显式化，避免回到 Vuex `mapGetters` 那种"不知道变量从哪来"的老路 | #6 |
 
 > 四种类别：`bug` / `correction`（用户纠正）/ `pattern`（模式）/ `review`（Review 发现）
