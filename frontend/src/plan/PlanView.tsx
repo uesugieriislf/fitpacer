@@ -369,7 +369,7 @@ export default defineComponent({
     })
 
     return () => (
-      <div class="plan-view">
+      <div class="plan-view view">
         <div class="view-header">
           <h1 class="view-title">训练计划</h1>
 
@@ -530,7 +530,7 @@ export default defineComponent({
           {/* 调整弹窗 */}
           <Teleport to="body">
             {store.showAdjustModal && (
-              <div class="modal-overlay" onClick={(e) => { if (e.target === e.currentTarget) store.cancelAdjust() }}>
+              <div class="modal-overlay pv-modal" onClick={(e) => { if (e.target === e.currentTarget) store.cancelAdjust() }}>
                 <div class="modal-content">
                   <h3>调整计划</h3>
                   <p class="modal-desc">你错过了 {store.adjustDate} 的训练，如何调整？</p>
@@ -553,7 +553,7 @@ export default defineComponent({
           {/* 手动选日期弹窗 */}
           <Teleport to="body">
             {showDatePicker.value && (
-              <div class="modal-overlay" onClick={(e) => { if (e.target === e.currentTarget) showDatePicker.value = false }}>
+              <div class="modal-overlay pv-modal" onClick={(e) => { if (e.target === e.currentTarget) showDatePicker.value = false }}>
                 <div class="modal-content">
                   <h3>选择推迟日期</h3>
                   <p class="modal-desc">将 {store.adjustDate} 的训练推迟到：</p>
@@ -581,7 +581,7 @@ export default defineComponent({
           {/* 有氧完成弹窗 */}
           <Teleport to="body">
             {store.showCardioModal && (
-              <div class="modal-overlay" onClick={(e) => { if (e.target === e.currentTarget) store.cancelCardioModal() }}>
+              <div class="modal-overlay pv-modal" onClick={(e) => { if (e.target === e.currentTarget) store.cancelCardioModal() }}>
                 <div class="modal-content">
                   <h3>🏃 记录有氧训练</h3>
                   <p class="modal-desc">{store.cardioModalDate}</p>
@@ -652,7 +652,7 @@ export default defineComponent({
           {/* 力量完成弹窗 */}
           <Teleport to="body">
             {store.showStrengthModal && (
-              <div class="modal-overlay" onClick={(e) => { if (e.target === e.currentTarget) store.cancelStrengthModal() }}>
+              <div class="modal-overlay pv-modal" onClick={(e) => { if (e.target === e.currentTarget) store.cancelStrengthModal() }}>
                 <div class="modal-content">
                   <h3>💪 完成力量训练</h3>
                   <p class="modal-desc">{store.strengthModalDate}</p>
@@ -791,7 +791,7 @@ export default defineComponent({
           {/* 热身放松说明弹窗 */}
           <Teleport to="body">
             {showWarmupTip.value && (
-              <div class="modal-overlay" onClick={(e) => { if (e.target === e.currentTarget) showWarmupTip.value = false }}>
+              <div class="modal-overlay pv-modal" onClick={(e) => { if (e.target === e.currentTarget) showWarmupTip.value = false }}>
                 <div class="modal-content">
                   <h4>为什么热身和放松很重要？</h4>
                   <div class="warmup-tip-body">
