@@ -281,7 +281,7 @@ export default defineComponent({
           <Teleport to="body">
             {showLibModal.value && (
               <div
-                class="modal-overlay"
+                class="modal-overlay pv-modal"
                 onClick={(e: MouseEvent) => {
                   if (e.target === e.currentTarget) showLibModal.value = false;
                 }}

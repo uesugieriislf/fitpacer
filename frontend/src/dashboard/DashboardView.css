@@ -396,3 +396,101 @@
     margin-top: -2px;
   }
 }
+
+/* Teleport 弹窗样式 */
+.pv-modal {
+  .bmi-formula {
+    font-size: 18px;
+    font-weight: 650;
+    color: var(--color-text);
+    background: var(--color-bg);
+    border-radius: var(--radius-sm);
+    padding: 14px 16px;
+    text-align: center;
+    margin-bottom: 16px;
+    letter-spacing: 0.2px;
+  }
+  .bmi-desc {
+    font-size: 13px;
+    color: var(--color-text-secondary);
+    margin-bottom: 12px;
+  }
+  .bmi-range-list {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin-bottom: 14px;
+  }
+  .bmi-range-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 14px;
+    border-radius: var(--radius-sm);
+    background: var(--color-bg);
+  }
+  .bmi-range-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .bmi-range-label {
+    font-size: 15px;
+    font-weight: 600;
+    flex: 1;
+  }
+  .bmi-range-value {
+    font-size: 13px;
+    color: var(--color-text-secondary);
+    font-variant-numeric: tabular-nums;
+  }
+  .bmi-note {
+    font-size: 12px;
+    color: var(--color-text-secondary);
+    line-height: 1.6;
+    margin-bottom: 8px;
+    opacity: 0.8;
+  }
+  .waist-range-text {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+  }
+  .waist-range-label {
+    font-size: 15px;
+    font-weight: 600;
+  }
+  .waist-range-desc {
+    font-size: 11px;
+    color: var(--color-text-secondary);
+  }
+  .form-field {
+    margin-bottom: 20px;
+  }
+  .form-row {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+  .form-field-half {
+    flex: 1;
+    position: relative;
+  }
+  .input-suffix {
+    position: absolute;
+    right: 14px;
+    top: 38px;
+    font-size: 13px;
+    color: var(--color-text-secondary);
+    pointer-events: none;
+  }
+  .picker-summary {
+    text-align: center;
+    margin-top: 12px;
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--color-primary);
+  }
+}

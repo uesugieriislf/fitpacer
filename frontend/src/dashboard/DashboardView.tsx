@@ -568,7 +568,7 @@ export default defineComponent({
           <Teleport to="body">
             {showBmiModal.value && (
               <div
-                class="modal-overlay"
+                class="modal-overlay pv-modal"
                 onClick={(e) => {
                   if (e.target === e.currentTarget) showBmiModal.value = false;
                 }}
@@ -613,7 +613,7 @@ export default defineComponent({
           <Teleport to="body">
             {showWaistModal.value && (
               <div
-                class="modal-overlay"
+                class="modal-overlay pv-modal"
                 onClick={(e) => {
                   if (e.target === e.currentTarget) showWaistModal.value = false;
                 }}
@@ -663,7 +663,7 @@ export default defineComponent({
           <Teleport to="body">
             {showBodyForm.value && (
               <div
-                class="modal-overlay"
+                class="modal-overlay pv-modal"
                 onClick={(e) => {
                   if (e.target === e.currentTarget) showBodyForm.value = false;
                 }}
