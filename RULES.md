@@ -303,11 +303,14 @@ export class PostService { ... }
 ### 开发流程
 
 ```
-改代码 → 跑测试 → git commit → 提交
+改代码 → 类型检查（vue-tsc --noEmit）→ 跑测试（vp test）→ 构建（vp build）→ git commit → 提交
 ```
 
-- 测试是逻辑代码的标配，不是可选项
-- 每次有意义的变更后，必须立即 git add + git commit
+- **每次有意义的变更后，必须执行完整质量门禁：**
+  1. `npx vue-tsc --noEmit` — 零 TS 错误
+  2. `pnpm run test` — 全部测试通过
+  3. `pnpm run build` — 构建通过
+- 三步全部通过后才允许提交
 - commit message 用中文，简要概括本次变更内容
 
 ### 不测试什么
