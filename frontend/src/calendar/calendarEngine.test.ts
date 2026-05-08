@@ -17,6 +17,8 @@ const makePlan = (
   details: "",
   exercises: [],
   cardioRecord: null,
+  warmupDone: false,
+  cooldownDone: false,
 });
 
 describe("getMonthGrid", () => {

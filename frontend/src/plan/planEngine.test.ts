@@ -53,7 +53,6 @@ describe('addDays', () => {
 const baseConfig: PlanConfig = {
   startDate: '2026-05-04', // 周一
   trainingDays: [1, 2, 4, 5, 0], // 周一-周二-周四-周五-周日
-  cardioTargetMinutes: 150
 }
 
 describe('generatePlan', () => {
@@ -214,7 +213,8 @@ describe('ensureDayExercises', () => {
   it('已有 exercises 的不修改', () => {
     const day: DayPlan = {
       date: '2026-05-04', type: 'strength', completed: false,
-      missed: false, details: '', exercises: [{ name: '测试', prescription: '3x10', completed: false }]
+      missed: false, details: '', exercises: [{ name: '测试', prescription: '3x10', completed: false }],
+      cardioRecord: null, warmupDone: false, cooldownDone: false,
     }
     const result = ensureDayExercises(day)
     expect(result.exercises![0].name).toBe('测试')
@@ -223,7 +223,8 @@ describe('ensureDayExercises', () => {
   it('旧力量日 exercises 不再自动补全（用户自由选择）', () => {
     const day: DayPlan = {
       date: '2026-05-04', type: 'strength', completed: false,
-      missed: false, details: ''
+      missed: false, details: '', exercises: [],
+      cardioRecord: null, warmupDone: false, cooldownDone: false,
     }
     const result = ensureDayExercises(day)
     expect(result.exercises!.length).toBe(0)
@@ -232,7 +233,8 @@ describe('ensureDayExercises', () => {
   it('旧有氧日自动补全', () => {
     const day: DayPlan = {
       date: '2026-05-05', type: 'cardio', completed: false,
-      missed: false, details: '有氧 35-40 分钟'
+      missed: false, details: '有氧 35-40 分钟', exercises: [],
+      cardioRecord: null, warmupDone: false, cooldownDone: false,
     }
     const result = ensureDayExercises(day)
     expect(result.exercises!.length).toBe(2)
@@ -242,8 +244,9 @@ describe('ensureDayExercises', () => {
   it('旧休息日保持空', () => {
     const day: DayPlan = {
       date: '2026-05-06', type: 'rest', completed: false,
-      missed: false, details: ''
-    }
+      missed: false, details: '',
+      cardioRecord: null, warmupDone: false, cooldownDone: false,
+    } as DayPlan
     const result = ensureDayExercises(day)
     // rest 日不创建 exercises 字段
     expect(result.exercises).toBeUndefined()

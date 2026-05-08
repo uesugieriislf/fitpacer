@@ -139,7 +139,9 @@ export function generatePlan(config: PlanConfig): DayPlan[] {
       missed: false,
       details,
       exercises,
-      cardioRecord
+      cardioRecord,
+      warmupDone: false,
+      cooldownDone: false,
     })
   }
 

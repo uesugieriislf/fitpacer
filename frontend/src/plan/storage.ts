@@ -1,7 +1,8 @@
 // plan/storage.ts — localStorage 读写 + 类型定义
 
 export type TrainingType = 'strength' | 'cardio' | 'rest'
-export type { MuscleGroup } from '../shared/exercises'
+import type { MuscleGroup } from '../shared/exercises'
+export type { MuscleGroup }
 
 /** 力量训练单项动作 */
 export interface ExerciseItem {
