@@ -1,30 +1,30 @@
 // settings/storage.ts — localStorage 读写 + 类型定义
 
 export interface Settings {
-  trainingDays: number[]     // 0=Sun, 1=Mon, ..., 6=Sat
-  sleepReminderTime: string  // 'HH:MM'
-  cardioTargetMinutes: number // 每周有氧目标（分钟），默认 150
+  trainingDays: number[]; // 0=Sun, 1=Mon, ..., 6=Sat
+  sleepReminderTime: string; // 'HH:MM'
+  cardioTargetMinutes: number; // 每周有氧目标（分钟），默认 150
 }
 
-const SETTINGS_KEY = 'fitpacer_settings'
+const SETTINGS_KEY = "fitpacer_settings";
 
 const DEFAULT_SETTINGS: Settings = {
   trainingDays: [0, 1, 2, 4, 5], // 含周日
-  sleepReminderTime: '22:00',
-  cardioTargetMinutes: 150
-}
+  sleepReminderTime: "22:00",
+  cardioTargetMinutes: 150,
+};
 
 export function loadSettings(): Settings {
   try {
-    const raw = localStorage.getItem(SETTINGS_KEY)
-    if (!raw) return { ...DEFAULT_SETTINGS }
-    const data = JSON.parse(raw)
-    return { ...DEFAULT_SETTINGS, ...data } as Settings
+    const raw = localStorage.getItem(SETTINGS_KEY);
+    if (!raw) return { ...DEFAULT_SETTINGS };
+    const data = JSON.parse(raw);
+    return { ...DEFAULT_SETTINGS, ...data } as Settings;
   } catch {
-    return { ...DEFAULT_SETTINGS }
+    return { ...DEFAULT_SETTINGS };
   }
 }
 
 export function saveSettings(settings: Settings): void {
-  localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings))
+  localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
 }

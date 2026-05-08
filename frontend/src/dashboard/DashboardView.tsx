@@ -1,292 +1,336 @@
-import { ref, computed, onMounted, nextTick, watch, defineComponent, Teleport } from 'vue'
-import { Chart, registerables } from 'chart.js'
-import { useDashboard } from './useDashboard'
-import { useGoal } from '../goal/useGoal'
-import CalendarPanel from '../calendar/CalendarPanel'
-import StatsPanel from '../stats/StatsPanel'
-import { usePlan } from '../plan/usePlan'
-import { useRecord } from '../record/useRecord'
-import './DashboardView.css'
+import { ref, computed, onMounted, nextTick, watch, defineComponent, Teleport } from "vue";
+import { Chart, registerables } from "chart.js";
+import { useDashboard } from "./useDashboard";
+import { useGoal } from "../goal/useGoal";
+import CalendarPanel from "../calendar/CalendarPanel";
+import StatsPanel from "../stats/StatsPanel";
+import { usePlan } from "../plan/usePlan";
+import { useRecord } from "../record/useRecord";
+import "./DashboardView.css";
 
-Chart.register(...registerables)
+Chart.register(...registerables);
 
 export default defineComponent({
   setup() {
-    const store = useDashboard()
-    const goalStore = useGoal()
-    const planStore = usePlan()
-    const recordStore = useRecord()
+    const store = useDashboard();
+    const goalStore = useGoal();
+    const planStore = usePlan();
+    const recordStore = useRecord();
 
     // 睡眠时长格式化
     function formatSleepHours(hours: number): string {
-      const h = Math.floor(hours)
-      const m = Math.round((hours - h) * 60)
-      if (h === 0) return `${m}分钟`
-      if (m === 0) return `${h}小时`
-      return `${h}小时${m}分钟`
+      const h = Math.floor(hours);
+      const m = Math.round((hours - h) * 60);
+      if (h === 0) return `${m}分钟`;
+      if (m === 0) return `${h}小时`;
+      return `${h}小时${m}分钟`;
     }
 
     // 身体数据表单
-    const showBodyForm = ref(false)
-    const formWeight = ref(70)
-    const formWaist = ref(80)
-    const formSleepHours = ref(7)
-    const formSleepMinutes = ref(0)
-    const formSleepQuality = ref(3)
-    const formSoreness = ref(2)
+    const showBodyForm = ref(false);
+    const formWeight = ref(70);
+    const formWaist = ref(80);
+    const formSleepHours = ref(7);
+    const formSleepMinutes = ref(0);
+    const formSleepQuality = ref(3);
+    const formSoreness = ref(2);
 
     // 滚动选择器 refs
-    const hoursPicker = ref<HTMLDivElement | null>(null)
-    const minutesPicker = ref<HTMLDivElement | null>(null)
+    const hoursPicker = ref<HTMLDivElement | null>(null);
+    const minutesPicker = ref<HTMLDivElement | null>(null);
 
     // 小时列表 1-16 — 三段循环（中间段为真实段）
-    const hoursList = Array.from({ length: 16 }, (_, i) => i + 1)
-    const hoursListExt = [...hoursList, ...hoursList, ...hoursList]
-    const HOURS_N = 16
-    const HOURS_MID = HOURS_N // 中间段起始索引
+    const hoursList = Array.from({ length: 16 }, (_, i) => i + 1);
+    const hoursListExt = [...hoursList, ...hoursList, ...hoursList];
+    const HOURS_N = 16;
+    const HOURS_MID = HOURS_N; // 中间段起始索引
 
     // 分钟列表：0-55，每5分钟一档 — 三段循环
-    const minutesList = [0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55]
-    const minutesListExt = [...minutesList, ...minutesList, ...minutesList]
-    const MINUTES_N = 12
-    const MINUTES_MID = MINUTES_N // 中间段起始索引
+    const minutesList = [0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55];
+    const minutesListExt = [...minutesList, ...minutesList, ...minutesList];
+    const MINUTES_N = 12;
+    const MINUTES_MID = MINUTES_N; // 中间段起始索引
 
     function openBodyForm() {
-      formWeight.value = goalStore.currentWeight ?? 70
-      formWaist.value = 80
-      const total = formSleepHours.value + formSleepMinutes.value / 60
-      const h = Math.floor(total)
-      const m = Math.round((total - h) * 60)
-      formSleepHours.value = Math.max(1, Math.min(16, h || 7))
-      formSleepMinutes.value = Math.round(m / 5) * 5
-      if (formSleepMinutes.value >= 60) { formSleepMinutes.value -= 60; formSleepHours.value++ }
-      formSleepQuality.value = 3
-      formSoreness.value = 2
-      showBodyForm.value = true
+      formWeight.value = goalStore.currentWeight ?? 70;
+      formWaist.value = 80;
+      const total = formSleepHours.value + formSleepMinutes.value / 60;
+      const h = Math.floor(total);
+      const m = Math.round((total - h) * 60);
+      formSleepHours.value = Math.max(1, Math.min(16, h || 7));
+      formSleepMinutes.value = Math.round(m / 5) * 5;
+      if (formSleepMinutes.value >= 60) {
+        formSleepMinutes.value -= 60;
+        formSleepHours.value++;
+      }
+      formSleepQuality.value = 3;
+      formSoreness.value = 2;
+      showBodyForm.value = true;
       nextTick(() => {
-        scrollPickerTo(hoursPicker.value, HOURS_MID + formSleepHours.value - 1)
-        scrollPickerTo(minutesPicker.value, MINUTES_MID + formSleepMinutes.value / 5)
-      })
+        scrollPickerTo(hoursPicker.value, HOURS_MID + formSleepHours.value - 1);
+        scrollPickerTo(minutesPicker.value, MINUTES_MID + formSleepMinutes.value / 5);
+      });
     }
 
     function scrollPickerTo(el: HTMLElement | null, index: number) {
-      if (!el) return
-      const itemH = 48
-      el.scrollTop = index * itemH
+      if (!el) return;
+      const itemH = 48;
+      el.scrollTop = index * itemH;
     }
 
     function onHoursScrollEnd() {
-      if (!hoursPicker.value) return
-      const idx = Math.round(hoursPicker.value.scrollTop / 48)
-      const realIdx = ((idx % HOURS_N) + HOURS_N) % HOURS_N
-      formSleepHours.value = realIdx + 1
+      if (!hoursPicker.value) return;
+      const idx = Math.round(hoursPicker.value.scrollTop / 48);
+      const realIdx = ((idx % HOURS_N) + HOURS_N) % HOURS_N;
+      formSleepHours.value = realIdx + 1;
       // 跳回中间段，实现无缝循环
-      const targetIdx = HOURS_MID + realIdx
+      const targetIdx = HOURS_MID + realIdx;
       if (idx !== targetIdx) {
-        hoursPicker.value.scrollTop = targetIdx * 48
+        hoursPicker.value.scrollTop = targetIdx * 48;
       }
     }
 
     function onMinutesScrollEnd() {
-      if (!minutesPicker.value) return
-      const idx = Math.round(minutesPicker.value.scrollTop / 48)
-      const realIdx = ((idx % MINUTES_N) + MINUTES_N) % MINUTES_N
-      formSleepMinutes.value = realIdx * 5
+      if (!minutesPicker.value) return;
+      const idx = Math.round(minutesPicker.value.scrollTop / 48);
+      const realIdx = ((idx % MINUTES_N) + MINUTES_N) % MINUTES_N;
+      formSleepMinutes.value = realIdx * 5;
       // 跳回中间段，实现无缝循环
-      const targetIdx = MINUTES_MID + realIdx
+      const targetIdx = MINUTES_MID + realIdx;
       if (idx !== targetIdx) {
-        minutesPicker.value.scrollTop = targetIdx * 48
+        minutesPicker.value.scrollTop = targetIdx * 48;
       }
     }
 
     const totalSleepHours = () => {
-      return parseFloat((formSleepHours.value + formSleepMinutes.value / 60).toFixed(2))
-    }
+      return parseFloat((formSleepHours.value + formSleepMinutes.value / 60).toFixed(2));
+    };
 
     function submitBodyData() {
-      const _now = new Date()
+      const _now = new Date();
       store.addBodyData({
-        date: `${_now.getFullYear()}-${String(_now.getMonth() + 1).padStart(2, '0')}-${String(_now.getDate()).padStart(2, '0')}`,
+        date: `${_now.getFullYear()}-${String(_now.getMonth() + 1).padStart(2, "0")}-${String(_now.getDate()).padStart(2, "0")}`,
         weight: formWeight.value,
         waist: formWaist.value,
         sleepHours: totalSleepHours(),
         sleepQuality: formSleepQuality.value,
-        soreness: formSoreness.value
-      })
-      showBodyForm.value = false
+        soreness: formSoreness.value,
+      });
+      showBodyForm.value = false;
     }
 
     // 图表
-    const weightCanvas = ref<HTMLCanvasElement | null>(null)
-    const waistCanvas = ref<HTMLCanvasElement | null>(null)
-    const chartsRendered = ref(false)
-    let weightChart: Chart | null = null
-    let waistChart: Chart | null = null
+    const weightCanvas = ref<HTMLCanvasElement | null>(null);
+    const waistCanvas = ref<HTMLCanvasElement | null>(null);
+    const chartsRendered = ref(false);
+    let weightChart: Chart | null = null;
+    let waistChart: Chart | null = null;
 
     // 统计动画
-    const animatedValues = ref({ completionRate: 0, completedDays: 0, totalMinutes: 0 })
-    const statsAnimated = ref(false)
+    const animatedValues = ref({ completionRate: 0, completedDays: 0, totalMinutes: 0 });
+    const statsAnimated = ref(false);
 
     function animateStats() {
-      if (statsAnimated.value) return
-      statsAnimated.value = true
-      const target = store.weeklyStats
-      const duration = 800
-      const start = performance.now()
+      if (statsAnimated.value) return;
+      statsAnimated.value = true;
+      const target = store.weeklyStats;
+      const duration = 800;
+      const start = performance.now();
 
       function tick(now: number) {
-        const elapsed = now - start
-        const progress = Math.min(elapsed / duration, 1)
-        const ease = 1 - Math.pow(1 - progress, 3)
+        const elapsed = now - start;
+        const progress = Math.min(elapsed / duration, 1);
+        const ease = 1 - Math.pow(1 - progress, 3);
 
         animatedValues.value = {
           completionRate: Math.round(target.completionRate * ease),
           completedDays: Math.round(target.completedDays * ease),
-          totalMinutes: Math.round(target.totalMinutes * ease)
-        }
+          totalMinutes: Math.round(target.totalMinutes * ease),
+        };
 
         if (progress < 1) {
-          requestAnimationFrame(tick)
+          requestAnimationFrame(tick);
         } else {
-          animatedValues.value = target
+          animatedValues.value = target;
         }
       }
-      requestAnimationFrame(tick)
+      requestAnimationFrame(tick);
     }
 
     function renderCharts() {
       const chartColors = {
-        weight: '#2BA245',
-        weightBg: 'rgba(43, 162, 69, 0.08)',
-        waist: '#FF6B35',
-        waistBg: 'rgba(255, 107, 53, 0.08)'
-      }
+        weight: "#2BA245",
+        weightBg: "rgba(43, 162, 69, 0.08)",
+        waist: "#FF6B35",
+        waistBg: "rgba(255, 107, 53, 0.08)",
+      };
 
       if (weightCanvas.value) {
-        weightChart?.destroy()
+        weightChart?.destroy();
         weightChart = new Chart(weightCanvas.value, {
-          type: 'line',
+          type: "line",
           data: {
             labels: store.weightChartData.labels,
-            datasets: [{
-              ...store.weightChartData.datasets[0],
-              borderColor: chartColors.weight,
-              backgroundColor: chartColors.weightBg,
-              borderWidth: 2.5,
-              pointRadius: 3,
-              pointBackgroundColor: chartColors.weight,
-              pointBorderColor: '#fff',
-              pointBorderWidth: 2,
-              pointHoverRadius: 6
-            }]
+            datasets: [
+              {
+                ...store.weightChartData.datasets[0],
+                borderColor: chartColors.weight,
+                backgroundColor: chartColors.weightBg,
+                borderWidth: 2.5,
+                pointRadius: 3,
+                pointBackgroundColor: chartColors.weight,
+                pointBorderColor: "#fff",
+                pointBorderWidth: 2,
+                pointHoverRadius: 6,
+              },
+            ],
           },
           options: {
             responsive: true,
             maintainAspectRatio: false,
-            animation: { duration: 900, easing: 'easeOutQuart' },
+            animation: { duration: 900, easing: "easeOutQuart" },
             plugins: { legend: { display: false } },
             scales: {
               y: {
-                beginAtZero: false, grace: '8%',
-                grid: { color: 'rgba(0,0,0,0.04)' },
-                ticks: { font: { size: 11 } }
+                beginAtZero: false,
+                grace: "8%",
+                grid: { color: "rgba(0,0,0,0.04)" },
+                ticks: { font: { size: 11 } },
               },
               x: {
                 grid: { display: false },
-                ticks: { font: { size: 10 }, maxRotation: 0 }
-              }
-            }
-          }
-        })
+                ticks: { font: { size: 10 }, maxRotation: 0 },
+              },
+            },
+          },
+        });
       }
       if (waistCanvas.value) {
-        waistChart?.destroy()
+        waistChart?.destroy();
         waistChart = new Chart(waistCanvas.value, {
-          type: 'line',
+          type: "line",
           data: {
             labels: store.waistChartData.labels,
-            datasets: [{
-              ...store.waistChartData.datasets[0],
-              borderColor: chartColors.waist,
-              backgroundColor: chartColors.waistBg,
-              borderWidth: 2.5,
-              pointRadius: 3,
-              pointBackgroundColor: chartColors.waist,
-              pointBorderColor: '#fff',
-              pointBorderWidth: 2,
-              pointHoverRadius: 6
-            }]
+            datasets: [
+              {
+                ...store.waistChartData.datasets[0],
+                borderColor: chartColors.waist,
+                backgroundColor: chartColors.waistBg,
+                borderWidth: 2.5,
+                pointRadius: 3,
+                pointBackgroundColor: chartColors.waist,
+                pointBorderColor: "#fff",
+                pointBorderWidth: 2,
+                pointHoverRadius: 6,
+              },
+            ],
           },
           options: {
             responsive: true,
             maintainAspectRatio: false,
-            animation: { duration: 900, easing: 'easeOutQuart' },
+            animation: { duration: 900, easing: "easeOutQuart" },
             plugins: { legend: { display: false } },
             scales: {
               y: {
-                beginAtZero: false, grace: '8%',
-                grid: { color: 'rgba(0,0,0,0.04)' },
-                ticks: { font: { size: 11 } }
+                beginAtZero: false,
+                grace: "8%",
+                grid: { color: "rgba(0,0,0,0.04)" },
+                ticks: { font: { size: 11 } },
               },
               x: {
                 grid: { display: false },
-                ticks: { font: { size: 10 }, maxRotation: 0 }
-              }
-            }
-          }
-        })
+                ticks: { font: { size: 10 }, maxRotation: 0 },
+              },
+            },
+          },
+        });
       }
-      chartsRendered.value = true
+      chartsRendered.value = true;
     }
 
-    onMounted(() => nextTick(() => { renderCharts(); animateStats() }))
-    watch(() => store.bodyTrend, () => nextTick(renderCharts), { deep: true })
-    watch(() => store.weeklyStats, () => { statsAnimated.value = false; animateStats() }, { deep: true })
+    onMounted(() =>
+      nextTick(() => {
+        renderCharts();
+        animateStats();
+      }),
+    );
+    watch(
+      () => store.bodyTrend,
+      () => nextTick(renderCharts),
+      { deep: true },
+    );
+    watch(
+      () => store.weeklyStats,
+      () => {
+        statsAnimated.value = false;
+        animateStats();
+      },
+      { deep: true },
+    );
 
     const qualityLabels: Record<number, string> = {
-      1: '很差', 2: '较差', 3: '一般', 4: '好', 5: '很好'
-    }
+      1: "很差",
+      2: "较差",
+      3: "一般",
+      4: "好",
+      5: "很好",
+    };
 
     // 完成率环形颜色
     const rateColor = computed(() => {
-      const r = store.weeklyStats.completionRate
-      if (r >= 80) return '#00B365'
-      if (r >= 50) return '#F59E0B'
-      return '#FF3B30'
-    })
+      const r = store.weeklyStats.completionRate;
+      if (r >= 80) return "#00B365";
+      if (r >= 50) return "#F59E0B";
+      return "#FF3B30";
+    });
 
     // BMI 弹窗
-    const showBmiModal = ref(false)
+    const showBmiModal = ref(false);
 
     const bmiColor = computed(() => {
-      const b = goalStore.bmi
-      if (b === null) return 'var(--color-text)'
-      if (b < 18.5) return '#3B82F6'
-      if (b < 24) return '#00B365'
-      if (b < 28) return '#FF6B35'
-      return '#FF3B30'
-    })
+      const b = goalStore.bmi;
+      if (b === null) return "var(--color-text)";
+      if (b < 18.5) return "#3B82F6";
+      if (b < 24) return "#00B365";
+      if (b < 28) return "#FF6B35";
+      return "#FF3B30";
+    });
 
     const bmiRanges = [
-      { label: '偏瘦', range: '< 18.5', color: '#3B82F6' },
-      { label: '正常', range: '18.5 – 24', color: '#00B365' },
-      { label: '偏胖', range: '24 – 28', color: '#FF6B35' },
-      { label: '肥胖', range: '≥ 28', color: '#FF3B30' }
-    ]
+      { label: "偏瘦", range: "< 18.5", color: "#3B82F6" },
+      { label: "正常", range: "18.5 – 24", color: "#00B365" },
+      { label: "偏胖", range: "24 – 28", color: "#FF6B35" },
+      { label: "肥胖", range: "≥ 28", color: "#FF3B30" },
+    ];
 
     // 腰围参考标准（中国成人）
-    const showWaistModal = ref(false)
+    const showWaistModal = ref(false);
 
     const waistRanges = [
-      { label: '正常', range: '男性 < 85 cm / 女性 < 80 cm', color: '#00B365', desc: '中心性肥胖风险低' },
-      { label: '偏高', range: '男性 85–89 cm / 女性 80–84 cm', color: '#FF6B35', desc: '需要关注，建议调整饮食运动' },
-      { label: '高', range: '男性 ≥ 90 cm / 女性 ≥ 85 cm', color: '#FF3B30', desc: '中心性肥胖风险高，建议咨询医生' }
-    ]
+      {
+        label: "正常",
+        range: "男性 < 85 cm / 女性 < 80 cm",
+        color: "#00B365",
+        desc: "中心性肥胖风险低",
+      },
+      {
+        label: "偏高",
+        range: "男性 85–89 cm / 女性 80–84 cm",
+        color: "#FF6B35",
+        desc: "需要关注，建议调整饮食运动",
+      },
+      {
+        label: "高",
+        range: "男性 ≥ 90 cm / 女性 ≥ 85 cm",
+        color: "#FF3B30",
+        desc: "中心性肥胖风险高，建议咨询医生",
+      },
+    ];
 
     // 格式化时间戳
     function formatTime(createdAt: string): string {
-      const t = createdAt.slice(11, 16) // HH:mm
-      return t
+      const t = createdAt.slice(11, 16); // HH:mm
+      return t;
     }
 
     return () => (
@@ -306,20 +350,34 @@ export default defineComponent({
             {goalStore.currentWeight !== null ? (
               <div class="goal-hero card card-elevated">
                 <div class="goal-hero-top">
-                  <div class="goal-bmi-block" style={{ background: bmiColor.value + '15' }} onClick={() => { showBmiModal.value = true }}>
-                    <div class="goal-bmi-number" style={{ color: bmiColor.value }}>{goalStore.bmi}</div>
+                  <div
+                    class="goal-bmi-block"
+                    style={{ background: bmiColor.value + "15" }}
+                    onClick={() => {
+                      showBmiModal.value = true;
+                    }}
+                  >
+                    <div class="goal-bmi-number" style={{ color: bmiColor.value }}>
+                      {goalStore.bmi}
+                    </div>
                     <div class="goal-bmi-label">{goalStore.bmiCategory}</div>
                     <div class="goal-bmi-hint">轻触了解</div>
                   </div>
                   <div class="goal-weight-block">
-                    <div class="goal-weight-current">{goalStore.currentWeight}<span class="goal-unit"> kg</span></div>
+                    <div class="goal-weight-current">
+                      {goalStore.currentWeight}
+                      <span class="goal-unit"> kg</span>
+                    </div>
                     <div class="goal-weight-target">目标 {goalStore.config.targetWeight} kg</div>
                   </div>
                 </div>
 
                 <div class="goal-progress-bar">
                   <div class="goal-progress-track">
-                    <div class="goal-progress-fill" style={{ width: goalStore.progressPercent + '%' }}></div>
+                    <div
+                      class="goal-progress-fill"
+                      style={{ width: goalStore.progressPercent + "%" }}
+                    ></div>
                   </div>
                   <div class="goal-progress-meta">
                     <span>{goalStore.progressPercent}%</span>
@@ -336,7 +394,9 @@ export default defineComponent({
                 <div class="empty-state">
                   <span class="empty-icon">📊</span>
                   <p>还没有身体数据</p>
-                  <p class="section-desc">💡 在「设置」中设定身高和目标体重，然后录入体重开始追踪</p>
+                  <p class="section-desc">
+                    💡 在「设置」中设定身高和目标体重，然后录入体重开始追踪
+                  </p>
                 </div>
               </div>
             )}
@@ -348,19 +408,46 @@ export default defineComponent({
             <div class="stats-row">
               <div class="stat-item card">
                 <svg class="stat-ring" viewBox="0 0 60 60">
-                  <circle cx="30" cy="30" r="24" fill="none" stroke="var(--color-border-light)" stroke-width="5"/>
-                  <circle cx="30" cy="30" r="24" fill="none" stroke={rateColor.value} stroke-width="5"
+                  <circle
+                    cx="30"
+                    cy="30"
+                    r="24"
+                    fill="none"
+                    stroke="var(--color-border-light)"
+                    stroke-width="5"
+                  />
+                  <circle
+                    cx="30"
+                    cy="30"
+                    r="24"
+                    fill="none"
+                    stroke={rateColor.value}
+                    stroke-width="5"
                     stroke-linecap="round"
                     stroke-dasharray="151"
-                    stroke-dashoffset={151 - (151 * Math.min(animatedValues.value.completionRate, 100) / 100)}
-                    transform="rotate(-90 30 30)"/>
-                  <text x="30" y="30" text-anchor="middle" dominant-baseline="central"
-                    fill={rateColor.value} font-size="16" font-weight="800">{animatedValues.value.completionRate}%</text>
+                    stroke-dashoffset={
+                      151 - (151 * Math.min(animatedValues.value.completionRate, 100)) / 100
+                    }
+                    transform="rotate(-90 30 30)"
+                  />
+                  <text
+                    x="30"
+                    y="30"
+                    text-anchor="middle"
+                    dominant-baseline="central"
+                    fill={rateColor.value}
+                    font-size="16"
+                    font-weight="800"
+                  >
+                    {animatedValues.value.completionRate}%
+                  </text>
                 </svg>
                 <div class="stat-label">完成率</div>
               </div>
               <div class="stat-item card">
-                <div class="stat-number">{animatedValues.value.completedDays}/{store.weeklyStats.totalTrainingDays}</div>
+                <div class="stat-number">
+                  {animatedValues.value.completedDays}/{store.weeklyStats.totalTrainingDays}
+                </div>
                 <div class="stat-label">训练日</div>
               </div>
               <div class="stat-item card">
@@ -386,42 +473,55 @@ export default defineComponent({
           </section>
 
           {/* 训练日历 */}
-          <CalendarPanel
-            plan={planStore.plan}
-            recordedDates={recordStore.recordedDates}
-          />
+          <CalendarPanel plan={planStore.plan} recordedDates={recordStore.recordedDates} />
 
           {/* 训练统计 */}
-          <StatsPanel
-            records={recordStore.records}
-          />
+          <StatsPanel records={recordStore.records} />
 
           {/* 身体数据 */}
           <section class="section">
             <div class="section-header">
               <h2 class="section-title">身体数据</h2>
-              <button class="btn btn-primary btn-sm" onClick={openBodyForm}>+ 录入</button>
+              <button class="btn btn-primary btn-sm" onClick={openBodyForm}>
+                + 录入
+              </button>
             </div>
 
             {store.bodyTrend.length > 0 && (
               <>
-                <div class={`chart-card card card-elevated${chartsRendered.value ? ' chart-visible' : ''}`}>
+                <div
+                  class={`chart-card card card-elevated${chartsRendered.value ? " chart-visible" : ""}`}
+                >
                   <div class="chart-header">
                     <span class="chart-dot chart-dot-green"></span>
                     <span>体重趋势</span>
                     <span class="chart-unit">kg</span>
                   </div>
-                  <div class="chart-body"><canvas ref={weightCanvas}></canvas></div>
+                  <div class="chart-body">
+                    <canvas ref={weightCanvas}></canvas>
+                  </div>
                 </div>
 
-                <div class={`chart-card card card-elevated${chartsRendered.value ? ' chart-visible' : ''}`}>
+                <div
+                  class={`chart-card card card-elevated${chartsRendered.value ? " chart-visible" : ""}`}
+                >
                   <div class="chart-header">
                     <span class="chart-dot chart-dot-orange"></span>
                     <span>腰围趋势</span>
                     <span class="chart-unit">cm</span>
-                    <button class="btn-waist-info" onClick={() => { showWaistModal.value = true }} title="腰围参考标准">ℹ️</button>
+                    <button
+                      class="btn-waist-info"
+                      onClick={() => {
+                        showWaistModal.value = true;
+                      }}
+                      title="腰围参考标准"
+                    >
+                      ℹ️
+                    </button>
                   </div>
-                  <div class="chart-body"><canvas ref={waistCanvas}></canvas></div>
+                  <div class="chart-body">
+                    <canvas ref={waistCanvas}></canvas>
+                  </div>
                 </div>
               </>
             )}
@@ -435,17 +535,31 @@ export default defineComponent({
 
             {store.bodyData.length > 0 && (
               <div class="body-list card-stagger">
-                {store.bodyData.slice().reverse().slice(0, 10).map((item) => (
-                  <div key={item.id} class="body-item card">
-                    <div class="body-item-date">{item.date.slice(5)}<span class="body-item-time">{formatTime(item.createdAt)}</span></div>
-                    <div class="body-item-metrics">
-                      <span class="body-metric">⚖️ {item.weight} kg</span>
-                      <span class="body-metric">📏 {item.waist} cm</span>
-                      <span class="body-metric body-metric-sleep">😴 {formatSleepHours(item.sleepHours ?? 0)}</span>
+                {store.bodyData
+                  .slice()
+                  .reverse()
+                  .slice(0, 10)
+                  .map((item) => (
+                    <div key={item.id} class="body-item card">
+                      <div class="body-item-date">
+                        {item.date.slice(5)}
+                        <span class="body-item-time">{formatTime(item.createdAt)}</span>
+                      </div>
+                      <div class="body-item-metrics">
+                        <span class="body-metric">⚖️ {item.weight} kg</span>
+                        <span class="body-metric">📏 {item.waist} cm</span>
+                        <span class="body-metric body-metric-sleep">
+                          😴 {formatSleepHours(item.sleepHours ?? 0)}
+                        </span>
+                      </div>
+                      <button
+                        class="btn btn-sm btn-ghost body-del"
+                        onClick={() => store.removeBodyData(item.id)}
+                      >
+                        ✕
+                      </button>
                     </div>
-                    <button class="btn btn-sm btn-ghost body-del" onClick={() => store.removeBodyData(item.id)}>✕</button>
-                  </div>
-                ))}
+                  ))}
               </div>
             )}
           </section>
@@ -453,7 +567,12 @@ export default defineComponent({
           {/* BMI 说明弹窗 */}
           <Teleport to="body">
             {showBmiModal.value && (
-              <div class="modal-overlay" onClick={(e) => { if (e.target === e.currentTarget) showBmiModal.value = false }}>
+              <div
+                class="modal-overlay"
+                onClick={(e) => {
+                  if (e.target === e.currentTarget) showBmiModal.value = false;
+                }}
+              >
                 <div class="modal-content">
                   <h3>关于 BMI</h3>
 
@@ -470,10 +589,20 @@ export default defineComponent({
                     ))}
                   </div>
 
-                  <p class="bmi-note">BMI 是衡量体重是否健康的参考指标，无法区分肌肉和脂肪。运动员可能因肌肉量大而 BMI 偏高，实际体脂率正常。</p>
+                  <p class="bmi-note">
+                    BMI 是衡量体重是否健康的参考指标，无法区分肌肉和脂肪。运动员可能因肌肉量大而 BMI
+                    偏高，实际体脂率正常。
+                  </p>
 
                   <div class="form-actions">
-                    <button class="btn btn-primary" onClick={() => { showBmiModal.value = false }}>知道了</button>
+                    <button
+                      class="btn btn-primary"
+                      onClick={() => {
+                        showBmiModal.value = false;
+                      }}
+                    >
+                      知道了
+                    </button>
                   </div>
                 </div>
               </div>
@@ -483,11 +612,18 @@ export default defineComponent({
           {/* 腰围说明弹窗 */}
           <Teleport to="body">
             {showWaistModal.value && (
-              <div class="modal-overlay" onClick={(e) => { if (e.target === e.currentTarget) showWaistModal.value = false }}>
+              <div
+                class="modal-overlay"
+                onClick={(e) => {
+                  if (e.target === e.currentTarget) showWaistModal.value = false;
+                }}
+              >
                 <div class="modal-content">
                   <h3>关于腰围</h3>
 
-                  <p class="bmi-desc">腰围是衡量腹部脂肪堆积（中心性肥胖）的简易指标。中国成人参考标准：</p>
+                  <p class="bmi-desc">
+                    腰围是衡量腹部脂肪堆积（中心性肥胖）的简易指标。中国成人参考标准：
+                  </p>
 
                   <div class="bmi-range-list">
                     {waistRanges.map((r) => (
@@ -503,12 +639,20 @@ export default defineComponent({
                   </div>
 
                   <p class="bmi-note">
-                    测量方法：站立位，软尺绕肚脐上缘 1cm 处水平一周，自然呼气末读数。<br />
+                    测量方法：站立位，软尺绕肚脐上缘 1cm 处水平一周，自然呼气末读数。
+                    <br />
                     腰围结合 BMI 可更全面评估健康风险。
                   </p>
 
                   <div class="form-actions">
-                    <button class="btn btn-primary" onClick={() => { showWaistModal.value = false }}>知道了</button>
+                    <button
+                      class="btn btn-primary"
+                      onClick={() => {
+                        showWaistModal.value = false;
+                      }}
+                    >
+                      知道了
+                    </button>
                   </div>
                 </div>
               </div>
@@ -518,19 +662,44 @@ export default defineComponent({
           {/* 录入表单 */}
           <Teleport to="body">
             {showBodyForm.value && (
-              <div class="modal-overlay" onClick={(e) => { if (e.target === e.currentTarget) showBodyForm.value = false }}>
+              <div
+                class="modal-overlay"
+                onClick={(e) => {
+                  if (e.target === e.currentTarget) showBodyForm.value = false;
+                }}
+              >
                 <div class="modal-content">
                   <h3>录入身体数据</h3>
 
                   <div class="form-row">
                     <div class="form-field form-field-half">
                       <div class="label">晨起体重</div>
-                      <input type="number" value={formWeight.value} onInput={(e: any) => { formWeight.value = parseFloat(e.target.value) }} class="text-input" step="0.1" min="30" max="200" />
+                      <input
+                        type="number"
+                        value={formWeight.value}
+                        onInput={(e: any) => {
+                          formWeight.value = parseFloat(e.target.value);
+                        }}
+                        class="text-input"
+                        step="0.1"
+                        min="30"
+                        max="200"
+                      />
                       <span class="input-suffix">kg</span>
                     </div>
                     <div class="form-field form-field-half">
                       <div class="label">腰围</div>
-                      <input type="number" value={formWaist.value} onInput={(e: any) => { formWaist.value = parseFloat(e.target.value) }} class="text-input" step="0.1" min="40" max="150" />
+                      <input
+                        type="number"
+                        value={formWaist.value}
+                        onInput={(e: any) => {
+                          formWaist.value = parseFloat(e.target.value);
+                        }}
+                        class="text-input"
+                        step="0.1"
+                        min="40"
+                        max="150"
+                      />
                       <span class="input-suffix">cm</span>
                     </div>
                   </div>
@@ -549,21 +718,35 @@ export default defineComponent({
                             {hoursListExt.map((h, hi) => (
                               <div
                                 key={hi}
-                                class={`picker-item${h === formSleepHours.value ? ' picker-item-active' : ''}`}
-                                onClick={() => { formSleepHours.value = h; scrollPickerTo(hoursPicker.value, HOURS_MID + h - 1) }}
-                              >{h} 时</div>
+                                class={`picker-item${h === formSleepHours.value ? " picker-item-active" : ""}`}
+                                onClick={() => {
+                                  formSleepHours.value = h;
+                                  scrollPickerTo(hoursPicker.value, HOURS_MID + h - 1);
+                                }}
+                              >
+                                {h} 时
+                              </div>
                             ))}
                           </div>
                         </div>
                         {/* 分钟 */}
-                        <div class="picker-col" ref={minutesPicker} onScrollend={onMinutesScrollEnd}>
+                        <div
+                          class="picker-col"
+                          ref={minutesPicker}
+                          onScrollend={onMinutesScrollEnd}
+                        >
                           <div class="picker-col-inner">
                             {minutesListExt.map((m, mi) => (
                               <div
                                 key={mi}
-                                class={`picker-item${m === formSleepMinutes.value ? ' picker-item-active' : ''}`}
-                                onClick={() => { formSleepMinutes.value = m; scrollPickerTo(minutesPicker.value, MINUTES_MID + m / 5) }}
-                              >{String(m).padStart(2, '0')} 分</div>
+                                class={`picker-item${m === formSleepMinutes.value ? " picker-item-active" : ""}`}
+                                onClick={() => {
+                                  formSleepMinutes.value = m;
+                                  scrollPickerTo(minutesPicker.value, MINUTES_MID + m / 5);
+                                }}
+                              >
+                                {String(m).padStart(2, "0")} 分
+                              </div>
                             ))}
                           </div>
                         </div>
@@ -574,23 +757,54 @@ export default defineComponent({
 
                   <div class="form-field">
                     <div class="label">睡眠质量 — {qualityLabels[formSleepQuality.value]}</div>
-                    <input type="range" min="1" max="5" value={formSleepQuality.value} onInput={(e: any) => { formSleepQuality.value = parseInt(e.target.value) }} class="slider" />
+                    <input
+                      type="range"
+                      min="1"
+                      max="5"
+                      value={formSleepQuality.value}
+                      onInput={(e: any) => {
+                        formSleepQuality.value = parseInt(e.target.value);
+                      }}
+                      class="slider"
+                    />
                     <div class="rpe-marks">
-                      <span>很差</span><span>一般</span><span>很好</span>
+                      <span>很差</span>
+                      <span>一般</span>
+                      <span>很好</span>
                     </div>
                   </div>
 
                   <div class="form-field">
                     <div class="label">肌肉酸痛度 — {qualityLabels[formSoreness.value]}</div>
-                    <input type="range" min="1" max="5" value={formSoreness.value} onInput={(e: any) => { formSoreness.value = parseInt(e.target.value) }} class="slider" />
+                    <input
+                      type="range"
+                      min="1"
+                      max="5"
+                      value={formSoreness.value}
+                      onInput={(e: any) => {
+                        formSoreness.value = parseInt(e.target.value);
+                      }}
+                      class="slider"
+                    />
                     <div class="rpe-marks">
-                      <span>不酸</span><span>适中</span><span>很酸</span>
+                      <span>不酸</span>
+                      <span>适中</span>
+                      <span>很酸</span>
                     </div>
                   </div>
 
                   <div class="form-actions">
-                    <button class="btn btn-ghost" onClick={() => { showBodyForm.value = false }}>取消</button>
-                    <button class="btn btn-primary" onClick={submitBodyData}>保存</button>
+                    <button
+                      class="btn btn-ghost"
+                      onClick={() => {
+                        showBodyForm.value = false;
+                      }}
+                    >
+                      取消
+                    </button>
+                    <button class="btn btn-primary" onClick={submitBodyData}>
+                      保存
+                    </button>
                   </div>
                 </div>
               </div>
@@ -604,6 +818,6 @@ export default defineComponent({
           <span class="fab-label">录入</span>
         </button>
       </div>
-    )
-  }
-})
+    );
+  },
+});

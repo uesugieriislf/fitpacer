@@ -1,13 +1,32 @@
 /* App.css */
-.app-shell { height: 100vh; height: 100dvh; display: flex; flex-direction: column; background: var(--color-bg); }
-
-.main-content {
-  flex: 1; overflow: hidden; display: flex; flex-direction: column; position: relative;
+.app-shell {
+  height: 100vh;
+  height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  background: var(--color-bg);
 }
 
-.tab-panel { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
-.slide-in-right { animation: slideInRight 0.28s var(--ease-out); }
-.slide-in-left { animation: slideInLeft 0.28s var(--ease-out); }
+.main-content {
+  flex: 1;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+.tab-panel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.slide-in-right {
+  animation: slideInRight 0.28s var(--ease-out);
+}
+.slide-in-left {
+  animation: slideInLeft 0.28s var(--ease-out);
+}
 
 .bottom-nav {
   display: flex;
@@ -35,13 +54,25 @@
   -webkit-tap-highlight-color: transparent;
 }
 
-.nav-item:active { transform: scale(0.92); }
+.nav-item:active {
+  transform: scale(0.92);
+}
 
 .nav-item.active {
   color: var(--color-primary);
 }
 
-.nav-icon { font-size: 24px; line-height: 1; transition: transform var(--duration-fast) var(--ease-bounce); }
-.nav-item.active .nav-icon { transform: scale(1.1); }
+.nav-icon {
+  font-size: 24px;
+  line-height: 1;
+  transition: transform var(--duration-fast) var(--ease-bounce);
+}
+.nav-item.active .nav-icon {
+  transform: scale(1.1);
+}
 
-.nav-label { font-size: 11px; font-weight: 590; letter-spacing: -0.1px; }
+.nav-label {
+  font-size: 11px;
+  font-weight: 590;
+  letter-spacing: -0.1px;
+}

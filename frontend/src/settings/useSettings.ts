@@ -1,40 +1,44 @@
 // settings/useSettings.ts — Pinia defineStore：用户偏好管理
 
-import { defineStore } from 'pinia'
-import { ref, watch } from 'vue'
-import type { Settings } from './storage'
-import { loadSettings, saveSettings } from './storage'
-import { usePlan } from '../plan/usePlan'
+import { defineStore } from "pinia";
+import { ref, watch } from "vue";
+import type { Settings } from "./storage";
+import { loadSettings, saveSettings } from "./storage";
+import { usePlan } from "../plan/usePlan";
 
-export const useSettings = defineStore('settings', () => {
-  const settings = ref<Settings>(loadSettings())
+export const useSettings = defineStore("settings", () => {
+  const settings = ref<Settings>(loadSettings());
 
   // 持久化
-  watch(settings, (val) => {
-    saveSettings(val)
-  }, { deep: true })
+  watch(
+    settings,
+    (val) => {
+      saveSettings(val);
+    },
+    { deep: true },
+  );
 
   function toggleTrainingDay(day: number) {
-    const idx = settings.value.trainingDays.indexOf(day)
+    const idx = settings.value.trainingDays.indexOf(day);
     if (idx === -1) {
-      settings.value.trainingDays = [...settings.value.trainingDays, day].sort()
+      settings.value.trainingDays = [...settings.value.trainingDays, day].sort();
     } else {
-      settings.value.trainingDays = settings.value.trainingDays.filter(d => d !== day)
+      settings.value.trainingDays = settings.value.trainingDays.filter((d) => d !== day);
     }
   }
 
   function setSleepReminderTime(time: string) {
-    settings.value.sleepReminderTime = time
+    settings.value.sleepReminderTime = time;
   }
 
   function setCardioTarget(minutes: number) {
-    settings.value.cardioTargetMinutes = Math.max(10, Math.min(600, minutes))
+    settings.value.cardioTargetMinutes = Math.max(10, Math.min(600, minutes));
   }
 
   /** 应用设置：重新生成计划 */
   function applySettings() {
-    const planStore = usePlan()
-    planStore.regenerate({ trainingDays: settings.value.trainingDays })
+    const planStore = usePlan();
+    planStore.regenerate({ trainingDays: settings.value.trainingDays });
   }
 
   return {
@@ -42,6 +46,6 @@ export const useSettings = defineStore('settings', () => {
     toggleTrainingDay,
     setSleepReminderTime,
     setCardioTarget,
-    applySettings
-  }
-})
+    applySettings,
+  };
+});

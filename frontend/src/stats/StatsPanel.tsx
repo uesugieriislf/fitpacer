@@ -1,33 +1,37 @@
-import { defineComponent, ref, computed } from 'vue'
-import { getPeriodReport, type PeriodUnit } from './statsEngine'
-import type { TrainingRecord } from '../record/storage'
-import './StatsPanel.css'
+import { defineComponent, ref, computed } from "vue";
+import { getPeriodReport, type PeriodUnit } from "./statsEngine";
+import type { TrainingRecord } from "../record/storage";
+import "./StatsPanel.css";
 
 export default defineComponent({
   props: {
     records: {
       type: Array as () => TrainingRecord[],
-      required: true
-    }
+      required: true,
+    },
   },
   setup(props) {
     const periodUnits = [
-      { key: 'week' as PeriodUnit, label: '周' },
-      { key: 'month' as PeriodUnit, label: '月' },
-      { key: 'quarter' as PeriodUnit, label: '季度' },
-      { key: 'year' as PeriodUnit, label: '年' },
-    ]
+      { key: "week" as PeriodUnit, label: "周" },
+      { key: "month" as PeriodUnit, label: "月" },
+      { key: "quarter" as PeriodUnit, label: "季度" },
+      { key: "year" as PeriodUnit, label: "年" },
+    ];
 
-    const activeUnit = ref<PeriodUnit>('month')
-    const offset = ref(0)
+    const activeUnit = ref<PeriodUnit>("month");
+    const offset = ref(0);
 
-    const report = computed(() =>
-      getPeriodReport(props.records, activeUnit.value, offset.value)
-    )
+    const report = computed(() => getPeriodReport(props.records, activeUnit.value, offset.value));
 
-    function prevPeriod() { offset.value-- }
-    function nextPeriod() { offset.value++ }
-    function resetPeriod() { offset.value = 0 }
+    function prevPeriod() {
+      offset.value--;
+    }
+    function nextPeriod() {
+      offset.value++;
+    }
+    function resetPeriod() {
+      offset.value = 0;
+    }
 
     return () => (
       <section class="stats-panel view">
@@ -41,19 +45,28 @@ export default defineComponent({
             {periodUnits.map((u) => (
               <button
                 key={u.key}
-                class={['st-dim-btn', { 'st-dim-active': activeUnit.value === u.key }]}
-                onClick={() => { activeUnit.value = u.key; offset.value = 0 }}
-              >{u.label}</button>
+                class={["st-dim-btn", { "st-dim-active": activeUnit.value === u.key }]}
+                onClick={() => {
+                  activeUnit.value = u.key;
+                  offset.value = 0;
+                }}
+              >
+                {u.label}
+              </button>
             ))}
           </div>
 
           {/* 时段导航 */}
           <div class="st-nav">
-            <button class="st-nav-btn" onClick={prevPeriod}>‹</button>
+            <button class="st-nav-btn" onClick={prevPeriod}>
+              ‹
+            </button>
             <button class="st-nav-title" onClick={resetPeriod} title="回到当前">
               {report.value.periodLabel}
             </button>
-            <button class="st-nav-btn" onClick={nextPeriod}>›</button>
+            <button class="st-nav-btn" onClick={nextPeriod}>
+              ›
+            </button>
           </div>
 
           {/* 概要 */}
@@ -99,7 +112,13 @@ export default defineComponent({
                   <div class="st-ex-bar-wrap">
                     <div
                       class="st-ex-bar"
-                      style={{ width: (ex.totalSets / Math.max(...report.value.exercises.map((e) => e.totalSets)) * 100) + '%' }}
+                      style={{
+                        width:
+                          (ex.totalSets /
+                            Math.max(...report.value.exercises.map((e) => e.totalSets))) *
+                            100 +
+                          "%",
+                      }}
                     ></div>
                   </div>
                 </div>
@@ -108,6 +127,6 @@ export default defineComponent({
           )}
         </div>
       </section>
-    )
-  }
-})
+    );
+  },
+});

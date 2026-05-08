@@ -1,29 +1,130 @@
 /* CardioModal.css — card modal styles */
 
-.cardio-modal .modal-desc { color: var(--color-text-secondary); margin: 4px 0 16px; font-size: 14px; }
+.cardio-modal .modal-desc {
+  color: var(--color-text-secondary);
+  margin: 4px 0 16px;
+  font-size: 14px;
+}
 
 .cardio-modal .chip {
-  padding: 8px 14px; border: 1.5px solid var(--color-border); border-radius: 20px; background: var(--color-bg); font-size: 13px; color: var(--color-text); cursor: pointer; transition: all var(--duration-fast) var(--ease-out); font-weight: 500; font-family: var(--font-stack);
+  padding: 8px 14px;
+  border: 1.5px solid var(--color-border);
+  border-radius: 20px;
+  background: var(--color-bg);
+  font-size: 13px;
+  color: var(--color-text);
+  cursor: pointer;
+  transition: all var(--duration-fast) var(--ease-out);
+  font-weight: 500;
+  font-family: var(--font-stack);
 }
-.cardio-modal .chip:active { transform: scale(0.96); }
-.cardio-modal .chip-active { border-color: var(--color-primary); background: var(--color-primary-bg); color: var(--color-primary); font-weight: 600; }
-.cardio-modal .chip-sm { padding: 5px 10px; font-size: 12px; }
+.cardio-modal .chip:active {
+  transform: scale(0.96);
+}
+.cardio-modal .chip-active {
+  border-color: var(--color-primary);
+  background: var(--color-primary-bg);
+  color: var(--color-primary);
+  font-weight: 600;
+}
+.cardio-modal .chip-sm {
+  padding: 5px 10px;
+  font-size: 12px;
+}
 
-.cardio-modal .cardio-action-grid { display: flex; flex-wrap: wrap; gap: 6px; }
-.cardio-modal .stepper-row { display: flex; align-items: center; justify-content: center; gap: 16px; padding: 8px 0; }
-.cardio-modal .stepper-value { font-size: 20px; font-weight: 650; min-width: 90px; text-align: center; }
-.cardio-modal .duration-quick { display: flex; gap: 6px; justify-content: center; margin-top: 8px; }
-.cardio-modal .form-group { margin-bottom: 20px; }
-.cardio-modal .label-optional { font-weight: 400; color: var(--color-text-tertiary); font-size: 12px; }
+.cardio-modal .cardio-action-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.cardio-modal .stepper-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 8px 0;
+}
+.cardio-modal .stepper-value {
+  font-size: 20px;
+  font-weight: 650;
+  min-width: 90px;
+  text-align: center;
+}
+.cardio-modal .duration-quick {
+  display: flex;
+  gap: 6px;
+  justify-content: center;
+  margin-top: 8px;
+}
+.cardio-modal .form-group {
+  margin-bottom: 20px;
+}
+.cardio-modal .label-optional {
+  font-weight: 400;
+  color: var(--color-text-tertiary);
+  font-size: 12px;
+}
 
-.cardio-modal .rec-section { margin: 12px 0; padding: 10px 12px; background: var(--color-bg); border-radius: var(--radius-sm); }
-.cardio-modal .rec-section-title { font-size: 13px; font-weight: 600; color: var(--color-text); margin-bottom: 8px; display: flex; align-items: center; gap: 6px; }
-.cardio-modal .rec-check { display: flex; align-items: center; gap: 8px; padding: 6px 0; font-size: 13px; color: var(--color-text); cursor: pointer; user-select: none; }
-.cardio-modal .rec-check input[type="checkbox"] { width: 18px; height: 18px; accent-color: var(--color-primary); }
+.cardio-modal .rec-section {
+  margin: 12px 0;
+  padding: 10px 12px;
+  background: var(--color-bg);
+  border-radius: var(--radius-sm);
+}
+.cardio-modal .rec-section-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-text);
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.cardio-modal .rec-check {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 0;
+  font-size: 13px;
+  color: var(--color-text);
+  cursor: pointer;
+  user-select: none;
+}
+.cardio-modal .rec-check input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--color-primary);
+}
 
-.cardio-modal .rpe-tip-btn { background: transparent; border: none; font-size: 12px; color: var(--color-primary); cursor: pointer; padding: 2px 6px; margin-left: auto; border-radius: 6px; transition: all var(--duration-fast) var(--ease-out); font-weight: 500; }
-.cardio-modal .rpe-tip-btn:active { background: var(--color-primary-bg); }
+.cardio-modal .rpe-tip-btn {
+  background: transparent;
+  border: none;
+  font-size: 12px;
+  color: var(--color-primary);
+  cursor: pointer;
+  padding: 2px 6px;
+  margin-left: auto;
+  border-radius: 6px;
+  transition: all var(--duration-fast) var(--ease-out);
+  font-weight: 500;
+}
+.cardio-modal .rpe-tip-btn:active {
+  background: var(--color-primary-bg);
+}
 
-.cardio-modal .warmup-tip-body { display: flex; flex-direction: column; gap: 14px; margin: 14px 0; }
-.cardio-modal .warmup-tip-item strong { font-size: 14px; display: block; margin-bottom: 4px; }
-.cardio-modal .warmup-tip-item p { font-size: 13px; color: var(--color-text-secondary); line-height: 1.6; }
+.cardio-modal .warmup-tip-body {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin: 14px 0;
+}
+.cardio-modal .warmup-tip-item strong {
+  font-size: 14px;
+  display: block;
+  margin-bottom: 4px;
+}
+.cardio-modal .warmup-tip-item p {
+  font-size: 13px;
+  color: var(--color-text-secondary);
+  line-height: 1.6;
+}
