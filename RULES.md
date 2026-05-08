@@ -106,40 +106,77 @@ backend/src/
 
 ## 渲染规范
 
+> Vue 3 TSX 通用最佳实践以 **`vue-tsx-best-practices`** Skill 为准。
+> 参考 Skill：`Skill({ skill: "vue-tsx-best-practices" })` 加载。
+> 以下 FitPacer 特化约定在此之上做增补/调整。
+
 ### 核心原则
 
-> 去掉 SFC 魔法，保留 Vue 响应式 + 生态，用 TSX 补齐组件表达力。
-
-Vue 3 真正有价值的东西是 **Proxy 响应式系统**（ref/computed/watch）和 **官方生态**（Pinia、Vue Router）。
-SFC（`.vue` 三区段）是历史包袱 —— 自创语法导致 TS 支持差、工具链特殊适配、测试困难。
-改用 TSX 后，Vue 就相当于一个"没有 Hooks 心智负担的 React"，组件 = 函数，测试 = 测函数。
+沿用 Skill 的核心理念：**Vue 组件的本质是一个被托管的 render 函数**。
+去掉 SFC 魔法，保留 Vue 响应式 + 生态，用 TSX 补齐组件表达力。
 
 ### 组件写法
 
+采用 Skill 的 `defineComponent({ props, emits, setup })` 模式：
+
 ```tsx
-// plan/PlanView.tsx
-import { usePlanStore } from './usePlan'
-import './PlanView.css'
+// shared/PlanCard.tsx
+import { defineComponent, type PropType } from 'vue'
+import './PlanCard.css'
 
-const PlanView = () => {
-  const planStore = usePlanStore()
-
-  return (
-    <div class="plan-view">
-      {planStore.plans.map(day => (
-        <div class="plan-view__day">{day.date}</div>
-      ))}
-    </div>
-  )
+interface Plan {
+  id: string
+  title: string
 }
 
-export default PlanView
+export default defineComponent({
+  props: {
+    plan: { type: Object as PropType<Plan>, required: true },
+    active: { type: Boolean, default: false },
+  },
+  emits: {
+    select: (id: string) => true,
+  },
+  setup(props, { emit }) {
+    return () => (
+      <div
+        class={['plan-card', props.active && 'plan-card--active'].filter(Boolean).join(' ')}
+        onClick={() => emit('select', props.plan.id)}
+      >
+        <span class="plan-card__title">{props.plan.title}</span>
+      </div>
+    )
+  },
+})
 ```
 
-- 组件是纯函数（或箭头函数）
-- Props 直接用函数参数，不需要 defineProps
-- 事件回调直接传函数 props（如 `onSelect`、`onToggle`）
-- Pinia 不解构（见依赖注入章节）
+要点：
+
+- **Props 必须声明** — 在 `props: { ... }` 中做类型 + 运行时校验，复杂类型用 `PropType<T>` 辅助
+- **Emits 必须声明** — 在 `emits: { ... }` 中声明事件及参数类型，保持输出接口清晰
+- **最小组件（无 props/emits）** — 直接用 `defineComponent(() => { return () => ... })` 省略 props 声明
+- **无 props 参数用 `_`** — 如 `setup(_, { emit })` 防止 TS 未使用变量报错
+- v-model — 照用，其本质就是 props + emits 语法糖
+
+### 铁律：禁止解构
+
+这个规则比 Skill 更严格 —— **Pinia 不解构，props 也不解构**。
+
+```tsx
+// ❌ 严禁 — 任何解构都不行
+const { name, age } = storeToRefs(useUserStore())  // Pinia 来源不明
+const { title } = toRefs(props)                     // props 来源模糊
+
+// ✅ 必须 — 来源显式化
+const userStore = useUserStore()
+userStore.name
+props.title
+```
+
+理由：
+- 不解构 → 每个变量用 `store.xxx` 或 `props.xxx`，读者一眼知道是从哪来的
+- 不解构 props → 省去 `toRefs` 的额外 API 调用，也不需要担心解构后丢失响应式
+- 这与 Pinia 不解构是同一原则的延伸
 
 ### 样式约定
 
@@ -203,21 +240,7 @@ export const usePlan = defineStore('plan', () => {
 - 第一次调用 `usePlan()` 时才执行 setup（惰性初始化）
 - 后续调用返回同一个实例（全局单例）
 - 通过 Pinia DevTools 调试
-
-### 铁律：禁止解构 Pinia store
-
-```typescript
-// ❌ 严禁 — 变成"不知道这个变量从哪里来"
-const { plan, addPlan } = storeToRefs(usePlanStore())
-
-// ✅ 必须 — 来源显式化
-const planStore = usePlanStore()
-planStore.plan
-planStore.addPlan()
-```
-
-解构让变量来源模糊化，回到 Vuex `mapGetters` 那种"全局变量不知道哪来的"老路。
-不解构是保持代码可读性和可追踪性的最简单手段。
+- **禁止解构 Pinia store**，详见「渲染规范 → 铁律：禁止解构」
 
 ### 后端：NestJS @Injectable（预留）
 
@@ -268,7 +291,7 @@ export class PostService { ... }
 | P0 | **纯函数模块** | 无依赖，最好测（planEngine, calendarEngine, statsEngine） |
 | P0 | **storage.ts** | 数据持久化正确性 |
 | P1 | **useXxx.ts（Pinia store）** | 业务逻辑核心，需 mock localStorage |
-| P1 | **.tsx 组件** | 组件 = 纯函数，直接传 props 测试渲染输出，不再挂载 .vue |
+| P1 | **.tsx 组件** | `defineComponent({ props, emits, setup })` 形式，可 mount 或 mock props 测试 |
 | P2 | **.vue 组件（存量）** | 存量 SFC 保留，新代码不写 .vue |
 
 ### 开发流程
@@ -313,5 +336,7 @@ export class PostService { ... }
 | 2026-05-07 | correction | **需要用户决策的内容（方案选择、选项对比等）必须写在可见的回复正文中，不能放在 thinking 推理块里**。thinking 是内部推理空间，用户看不到默认折叠内容。放进去等于没放 | #4 |
 | 2026-05-08 | pattern | **全面切 TSX，废弃 SFC**。新组件一律写 `.tsx`，样式用同目录 `.css` + 根 class 嵌套隔离。Options API 通过 `__VUE_OPTIONS_API__: false` 树摇掉。Pinia 禁止解构 | #6 |
 | 2026-05-08 | correction | **Pinia 禁止 `storeToRefs` 解构**。不解构才能让变量来源显式化，避免回到 Vuex `mapGetters` 那种"不知道变量从哪来"的老路 | #6 |
+| 2026-05-08 | pattern | **TSX 组件写法对齐 `vue-tsx-best-practices` Skill**。统一用 `defineComponent({ props, emits, setup })` 模式，纯函数组件已废弃 | #6 |
+| 2026-05-08 | correction | **禁止解构的范围扩展到 props**。不仅 Pinia 不解构，`toRefs(props)` 也不许用。理由同源：变量来源必须显式 | #6 |
 
 > 四种类别：`bug` / `correction`（用户纠正）/ `pattern`（模式）/ `review`（Review 发现）
