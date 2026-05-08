@@ -67,8 +67,13 @@ backend/src/
     post.controller.ts  ← 路由绑定
 ```
 
+### 允许
+- 每个功能模块下允许 `components/` 文件夹，用于存放该模块的 UI 组件
+- 每个组件一个文件夹：`组件名/组件名.tsx` + `组件名.css` + `组件名.test.ts`
+
 ### 禁止
-- 禁止出现 composables/、views/、components/、types/、controllers/、services/ 等技术分类文件夹
+- 禁止出现 composables/、views/、types/、controllers/、services/ 等技术分类文件夹
+- 禁止顶层 components/ 文件夹（组件归属到各自功能模块内）
 - 文件名必须体现功能含义，不用 index.ts
 
 ## Schema 驱动开发流程（后端上线后生效）

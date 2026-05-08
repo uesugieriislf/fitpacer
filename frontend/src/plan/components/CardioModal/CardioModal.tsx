@@ -1,5 +1,5 @@
 import { defineComponent, ref, watch } from 'vue'
-import { CARDIO_ACTIONS } from './planEngine'
+import { CARDIO_ACTIONS } from '../../planEngine'
 import './CardioModal.css'
 
 export default defineComponent({

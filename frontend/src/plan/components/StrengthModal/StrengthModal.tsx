@@ -1,8 +1,8 @@
 import { defineComponent, ref, watch, Teleport } from 'vue'
-import { MUSCLE_GROUPS, MUSCLE_GROUP_LABELS, MUSCLE_GROUP_ICONS, type ExerciseDef, type MuscleGroup } from '../shared/exercises'
-import { useExercise } from '../exercise/useExercise'
-import { usePlan } from './usePlan'
-import type { ExerciseItem, DayPlan } from './storage'
+import { MUSCLE_GROUPS, MUSCLE_GROUP_LABELS, MUSCLE_GROUP_ICONS, type ExerciseDef, type MuscleGroup } from '../../../shared/exercises'
+import { useExercise } from '../../../exercise/useExercise'
+import { usePlan } from '../../usePlan'
+import type { ExerciseItem, DayPlan } from '../../storage'
 import './StrengthModal.css'
 
 interface ExerciseFormItem {

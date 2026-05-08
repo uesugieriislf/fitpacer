@@ -6,8 +6,8 @@ import { getTypeIcon, getTypeLabel, weekdayLabels } from '../shared/icons'
 import { getAdjustOptions, findAvailableSlots } from './planEngine'
 import type { DayPlan } from './storage'
 import { MUSCLE_GROUPS, MUSCLE_GROUP_LABELS, MUSCLE_GROUP_ICONS, type MuscleGroup } from '../shared/exercises'
-import CardioModal from './CardioModal'
-import StrengthModal from './StrengthModal'
+import CardioModal from './components/CardioModal/CardioModal'
+import StrengthModal from './components/StrengthModal/StrengthModal'
 
 export default defineComponent({
   setup() {

@@ -2,7 +2,7 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vite-plus/test'
 import { mount } from '@vue/test-utils'
 import { setActivePinia, createPinia } from 'pinia'
-import { usePlan } from './usePlan'
+import { usePlan } from '../../usePlan'
 import StrengthModal from './StrengthModal'
 
 beforeEach(() => {
