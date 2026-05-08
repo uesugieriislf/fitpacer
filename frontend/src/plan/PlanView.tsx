@@ -383,7 +383,7 @@ export default defineComponent({
           {/* 有氧完成弹窗 */}
           <CardioModal
             show={store.showCardioModal}
-            date={store.cardioModalDate}
+            date={store.cardioModalDate ?? ''}
             onClose={() => store.cancelCardioModal()}
             onSubmit={(payload: any) => {
               store.saveCardioRecord(payload.date, payload.record, payload.warmupDone, payload.cooldownDone)
@@ -393,7 +393,7 @@ export default defineComponent({
           {/* 力量完成弹窗 */}
           <StrengthModal
             show={store.showStrengthModal}
-            date={store.strengthModalDate}
+            date={store.strengthModalDate ?? ''}
             onClose={() => store.cancelStrengthModal()}
             onSubmit={(payload: any) => {
               store.saveStrengthCompletion(payload.date, payload.exercises, payload.warmupDone, payload.cooldownDone)
