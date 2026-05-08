@@ -1,0 +1,170 @@
+.dashboard-view .goal-done-badge {
+  background: var(--color-primary-gradient); color: #fff;
+  padding: 3px 14px; border-radius: 20px; font-size: 13px; font-weight: 700;
+  animation: bounceIn 0.5s var(--ease-bounce);
+}
+
+.dashboard-view .goal-hero { padding: 22px; }
+.dashboard-view .goal-hero-top { display: flex; gap: 20px; align-items: center; margin-bottom: 18px; }
+
+.dashboard-view .goal-bmi-block {
+  border-radius: var(--radius); padding: 16px 18px; text-align: center; min-width: 88px;
+  cursor: pointer; transition: all var(--duration-fast) var(--ease-out);
+}
+.dashboard-view .goal-bmi-block:active { transform: scale(0.96); }
+.dashboard-view .goal-bmi-number { font-size: 34px; font-weight: 800; line-height: 1.1; }
+.dashboard-view .goal-bmi-label { font-size: 14px; font-weight: 650; margin-top: 2px; }
+.dashboard-view .goal-bmi-hint { font-size: 10px; color: var(--color-text-tertiary); margin-top: 6px; }
+
+.dashboard-view .goal-weight-block { flex: 1; }
+.dashboard-view .goal-weight-current { font-size: 36px; font-weight: 800; line-height: 1.1; }
+.dashboard-view .goal-unit { font-size: 18px; font-weight: 600; color: var(--color-text-secondary); }
+.dashboard-view .goal-weight-target { font-size: 14px; color: var(--color-text-secondary); margin-top: 4px; }
+
+.dashboard-view .goal-progress-bar { }
+.dashboard-view .goal-progress-track {
+  height: 8px; background: var(--color-border-light); border-radius: 4px; overflow: hidden;
+}
+.dashboard-view .goal-progress-fill {
+  height: 100%; background: var(--color-primary-gradient); border-radius: 4px;
+  transition: width 0.7s var(--ease-out); animation: fillRight 0.7s var(--ease-out);
+  min-width: 0;
+}
+.dashboard-view .goal-progress-meta {
+  display: flex; justify-content: space-between; margin-top: 8px;
+  font-size: 12px; color: var(--color-text-secondary); font-weight: 500;
+}
+
+.dashboard-view .stats-row { display: flex; gap: 8px; margin-bottom: 12px; }
+.dashboard-view .stat-item { flex: 1; text-align: center; padding: 16px 8px; }
+.dashboard-view .stat-ring { width: 52px; height: 52px; margin: 0 auto 6px; display: block; }
+.dashboard-view .stat-number { font-size: 24px; font-weight: 800; color: var(--color-primary); }
+.dashboard-view .stat-label { font-size: 11px; color: var(--color-text-secondary); margin-top: 4px; font-weight: 600; }
+
+.dashboard-view .stats-breakdown { }
+.dashboard-view .breakdown-row { display: flex; justify-content: space-between; padding: 7px 0; font-size: 14px; }
+.dashboard-view .breakdown-row + .breakdown-row { border-top: 1px solid var(--color-border-light); }
+.dashboard-view .breakdown-val { font-weight: 600; }
+
+.dashboard-view .chart-card { margin-bottom: 12px; opacity: 0; transform: translateY(20px);
+  transition: all 0.5s var(--ease-out); }
+.dashboard-view .chart-visible { opacity: 1; transform: translateY(0); }
+.dashboard-view .chart-header { display: flex; align-items: center; gap: 8px; margin-bottom: 12px;
+  font-size: 14px; font-weight: 600; }
+.dashboard-view .chart-dot { width: 10px; height: 10px; border-radius: 50%; }
+.dashboard-view .chart-dot-green { background: var(--color-primary); }
+.dashboard-view .chart-dot-orange { background: var(--color-accent); }
+.dashboard-view .chart-unit { margin-left: auto; font-size: 12px; color: var(--color-text-secondary); font-weight: 500; }
+
+.dashboard-view .btn-waist-info {
+  background: transparent; border: none; cursor: pointer;
+  font-size: 16px; padding: 0 4px; margin-left: 4px;
+  transition: transform var(--duration-fast) var(--ease-out);
+  line-height: 1;
+}
+.dashboard-view .btn-waist-info:active { transform: scale(0.85); }
+.dashboard-view .chart-body { height: 180px; }
+
+.dashboard-view .body-list { display: flex; flex-direction: column; gap: 8px; }
+.dashboard-view .body-item { display: flex; align-items: center; gap: 10px; padding: 14px 16px; }
+.dashboard-view .body-item-date { font-size: 13px; color: var(--color-text-secondary); min-width: 48px; font-weight: 500; display: flex; flex-direction: column; align-items: center; line-height: 1.3; }
+.dashboard-view .body-item-time { font-size: 10px; color: var(--color-text-tertiary); font-weight: 400; }
+.dashboard-view .body-item-metrics { flex: 1; display: flex; flex-wrap: wrap; gap: 6px 12px; font-size: 13px; }
+.dashboard-view .body-metric { font-weight: 500; }
+.dashboard-view .body-metric-sleep { background: var(--color-primary-bg); color: var(--color-primary);
+  padding: 2px 10px; border-radius: 10px; font-weight: 600; }
+.dashboard-view .body-del { font-size: 16px; color: var(--color-text-tertiary); padding: 4px 8px; }
+
+.dashboard-view .form-row { display: flex; gap: 12px; margin-bottom: 16px; }
+.dashboard-view .form-field-half { flex: 1; position: relative; }
+.dashboard-view .input-suffix { position: absolute; right: 14px; top: 38px; font-size: 13px;
+  color: var(--color-text-secondary); pointer-events: none; }
+
+.dashboard-view .form-field { margin-bottom: 20px; }
+
+.dashboard-view .picker-summary {
+  text-align: center; margin-top: 12px; font-size: 18px; font-weight: 700;
+  color: var(--color-primary);
+}
+
+.dashboard-view .bmi-formula {
+  font-size: 18px; font-weight: 650; color: var(--color-text);
+  background: var(--color-bg); border-radius: var(--radius-sm);
+  padding: 14px 16px; text-align: center; margin-bottom: 16px;
+  letter-spacing: 0.2px;
+}
+.dashboard-view .bmi-desc {
+  font-size: 13px; color: var(--color-text-secondary); margin-bottom: 12px;
+}
+.dashboard-view .bmi-range-list {
+  display: flex; flex-direction: column; gap: 4px; margin-bottom: 14px;
+}
+.dashboard-view .bmi-range-row {
+  display: flex; align-items: center; gap: 12px;
+  padding: 10px 14px; border-radius: var(--radius-sm); background: var(--color-bg);
+}
+.dashboard-view .bmi-range-dot {
+  width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0;
+}
+.dashboard-view .bmi-range-label {
+  font-size: 15px; font-weight: 600; flex: 1;
+}
+.dashboard-view .bmi-range-value {
+  font-size: 13px; color: var(--color-text-secondary); font-variant-numeric: tabular-nums;
+}
+.dashboard-view .bmi-note {
+  font-size: 12px; color: var(--color-text-secondary); line-height: 1.6;
+  margin-bottom: 8px; opacity: 0.8;
+}
+
+.dashboard-view .waist-range-text { flex: 1; display: flex; flex-direction: column; gap: 1px; }
+.dashboard-view .waist-range-label { font-size: 15px; font-weight: 600; }
+.dashboard-view .waist-range-desc { font-size: 11px; color: var(--color-text-secondary); }
+
+.dashboard-view .empty-state { text-align: center; padding: 32px 24px; color: var(--color-text-secondary);
+  animation: fadeInUp 0.4s var(--ease-out); }
+.dashboard-view .empty-state .empty-icon { font-size: 48px; margin-bottom: 12px; display: block;
+  animation: float 3s ease-in-out infinite; }
+.dashboard-view .empty-state p { margin-bottom: 12px; font-size: 14px; color: var(--color-text-secondary); }
+
+.dashboard-view .fab {
+  position: fixed;
+  bottom: calc(72px + var(--safe-bottom));
+  right: 16px;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  border: none;
+  background: var(--color-primary-gradient);
+  color: #fff;
+  box-shadow: 0 4px 20px rgba(0, 179, 101, 0.35);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+  cursor: pointer;
+  z-index: 60;
+  transition: transform var(--duration-fast) var(--ease-out), box-shadow var(--duration-fast) var(--ease-out);
+  animation: scaleInBounce 0.4s var(--ease-bounce);
+  -webkit-tap-highlight-color: transparent;
+  outline: none;
+}
+
+.dashboard-view .fab:active {
+  transform: scale(0.9);
+  box-shadow: 0 2px 10px rgba(0, 179, 101, 0.25);
+}
+
+.dashboard-view .fab-icon {
+  font-size: 28px;
+  font-weight: 400;
+  line-height: 1;
+}
+
+.dashboard-view .fab-label {
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  margin-top: -2px;
+}
