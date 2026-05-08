@@ -18,9 +18,10 @@ type guard 校验数据       →    Zod Schema 运行时校验
 
 ## 基础约定
 - **语言**：全程使用中文交流，AI 的思考链（reasoning）也必须使用中文
-- **构建工具**：统一使用 VP（Vite Plus）进行项目创建、测试、打包、运行
+- **构建工具**：统一使用 VP（Vite Plus）进行项目创建、测试、打包、格式化、运行
 - **包管理器**：统一使用 pnpm，禁止使用 npm 或 yarn
-- **代码检查**：使用 VP 内置能力，不额外配置 ESLint、Prettier、Husky、commitlint
+- **代码检查**：使用 VP 内置能力（fmt / lint / check），不额外配置 ESLint、Prettier、Husky、commitlint
+- **配置文件**：Vite 配置必须用 `.mjs` 格式（`vite.config.mjs`），不能用 `.ts`。VP 的工具链（fmt/lint/check）使用 Node.js 原生加载配置，TS 格式无法被直接解析
 - **部署**：说"发布"或"构建"即指部署到 GitHub Pages。执行 `cd frontend && pnpm run deploy`（= vp build + node scripts/deploy-ghpages.mjs）
 
 ## 目录结构
@@ -303,14 +304,16 @@ export class PostService { ... }
 ### 开发流程
 
 ```
-改代码 → 类型检查（vue-tsc --noEmit）→ 跑测试（vp test）→ 构建（vp build）→ git commit → 提交
+改代码 → 格式化（vp fmt）→ 类型检查（vue-tsc --noEmit）→ 跑测试（vp test）→ 构建（vp build）→ git commit → 提交
 ```
 
 - **每次有意义的变更后，必须执行完整质量门禁：**
+  0. `npx vp fmt` — 自动格式化代码
   1. `npx vue-tsc --noEmit` — 零 TS 错误
   2. `pnpm run test` — 全部测试通过
   3. `pnpm run build` — 构建通过
-- 三步全部通过后才允许提交
+- 可一键执行：`npx vp check`（格式化 + lint + 类型检查合并在一步）
+- 第 0 步格式化优先执行，确保 lint 检查时不会被格式问题干扰
 - commit message 用中文，简要概括本次变更内容
 
 ### 不测试什么
@@ -350,5 +353,6 @@ export class PostService { ... }
 | 2026-05-08 | bug | **TSX 中 CSS 需要显式 import `'./Xxx.css'`**。不带扩展名 Vite 自动找 `.tsx` 不会自动关联同名的 `.css` 文件。忘写 import = 样式全丢 | #6 |
 | 2026-05-08 | bug | **Teleport 到 body 的内容 CSS 不能嵌套在根 class 下**。Teleport 出去的 DOM 不在组件根元素内，必须用独立作用域类（如 `pv-modal`）包裹 | #6 |
 | 2026-05-08 | bug | **v-model on checkbox 在 Rolldown（VP 打包器）下报 const reassign**。`v-model` 生成 `$event => ref = $event` 但 ref 是 const。修复：改为显式 `checked={ref.value} onChange={e => ref.value = e.target.checked}` | #6 |
+| 2026-05-08 | bug | **VP 的 fmt/lint/check 命令无法加载 `.ts` 配置文件**。原因：Node.js ESM 无法直接解析 TypeScript，而 VP 工具链用原生 `import()` 加载配置。修复：将 `vite.config.ts` 改为 `vite.config.mjs`（内容纯 JS 无 TS 语法）。**Vite 也支持 `.mjs` 配置** | #6 |
 
 > 四种类别：`bug` / `correction`（用户纠正）/ `pattern`（模式）/ `review`（Review 发现）
