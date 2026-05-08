@@ -354,5 +354,6 @@ export class PostService { ... }
 | 2026-05-08 | bug | **Teleport 到 body 的内容 CSS 不能嵌套在根 class 下**。Teleport 出去的 DOM 不在组件根元素内，必须用独立作用域类（如 `pv-modal`）包裹 | #6 |
 | 2026-05-08 | bug | **v-model on checkbox 在 Rolldown（VP 打包器）下报 const reassign**。`v-model` 生成 `$event => ref = $event` 但 ref 是 const。修复：改为显式 `checked={ref.value} onChange={e => ref.value = e.target.checked}` | #6 |
 | 2026-05-08 | bug | **VP 的 fmt/lint/check 命令无法加载 `.ts` 配置文件**。原因：Node.js ESM 无法直接解析 TypeScript，而 VP 工具链用原生 `import()` 加载配置。修复：将 `vite.config.ts` 改为 `vite.config.mjs`（内容纯 JS 无 TS 语法）。**Vite 也支持 `.mjs` 配置** | #6 |
+| 2026-05-08 | bug | **Windows 不区分文件名大小写！** `App.css` 会覆盖 `app.css`。Created `App.css` → 覆盖了设计系统 `app.css`（CSS 变量全丢）。修复：从 git 历史恢复，App Shell 样式合并到 `app.css` 末尾。**在 Windows 上永远不要使用仅大小写不同的文件名** | #6 |
 
 > 四种类别：`bug` / `correction`（用户纠正）/ `pattern`（模式）/ `review`（Review 发现）
