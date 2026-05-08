@@ -339,5 +339,8 @@ export class PostService { ... }
 | 2026-05-08 | correction | **Pinia 禁止 `storeToRefs` 解构**。不解构才能让变量来源显式化，避免回到 Vuex `mapGetters` 那种"不知道变量从哪来"的老路 | #6 |
 | 2026-05-08 | pattern | **TSX 组件写法对齐 `vue-tsx-best-practices` Skill**。统一用 `defineComponent({ props, emits, setup })` 模式，纯函数组件已废弃 | #6 |
 | 2026-05-08 | correction | **禁止解构的范围扩展到 props**。不仅 Pinia 不解构，`toRefs(props)` 也不许用。理由同源：变量来源必须显式 | #6 |
+| 2026-05-08 | bug | **TSX 中 CSS 需要显式 import `'./Xxx.css'`**。不带扩展名 Vite 自动找 `.tsx` 不会自动关联同名的 `.css` 文件。忘写 import = 样式全丢 | #6 |
+| 2026-05-08 | bug | **Teleport 到 body 的内容 CSS 不能嵌套在根 class 下**。Teleport 出去的 DOM 不在组件根元素内，必须用独立作用域类（如 `pv-modal`）包裹 | #6 |
+| 2026-05-08 | bug | **v-model on checkbox 在 Rolldown（VP 打包器）下报 const reassign**。`v-model` 生成 `$event => ref = $event` 但 ref 是 const。修复：改为显式 `checked={ref.value} onChange={e => ref.value = e.target.checked}` | #6 |
 
 > 四种类别：`bug` / `correction`（用户纠正）/ `pattern`（模式）/ `review`（Review 发现）
